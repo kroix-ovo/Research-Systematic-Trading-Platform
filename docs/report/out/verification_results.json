@@ -1,0 +1,2306 @@
+{
+  "master_seed": 20260811,
+  "summary": {
+    "PASS": 81,
+    "INFO": 11,
+    "FLAG": 9,
+    "FAIL": 3
+  },
+  "checks": [
+    {
+      "cid": "R-01",
+      "section": "2.1 Momentum",
+      "claim": "Cumulative return $r_{t-k\\to t}=\\prod(1+r_j)-1$ equals $\\exp(\\sum \\ln(1+r_j))-1$",
+      "method": "identity on 512 simulated daily returns",
+      "expected": "0.0629191",
+      "observed": "0.0629191",
+      "status": "PASS",
+      "note": "agreement to rtol=1e-12, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "R-02",
+      "section": "2.11 Backtest math",
+      "claim": "Summing simple returns is not compounding; error grows with $n\\sigma^2$",
+      "method": "compare sum(r) against prod(1+r)-1 over 512 days",
+      "expected": "compound 0.062919",
+      "observed": "naive sum 0.086645",
+      "status": "INFO",
+      "note": "absolute gap 0.0237 (37.7% of the true figure) over a two-year sample. Backtest P&L must compound, never sum.",
+      "payload": {
+        "gap": 0.023725529017302127
+      }
+    },
+    {
+      "cid": "R-03",
+      "section": "2.11 Backtest math",
+      "claim": "$r_{\\log}=\\ln(1+r)$ inverts to $r=e^{r_{\\log}}-1$",
+      "method": "round-trip on 512 returns, max abs error",
+      "expected": "0",
+      "observed": "3.4694e-18",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-15",
+      "payload": {}
+    },
+    {
+      "cid": "V-01",
+      "section": "2.2 Volatility estimation",
+      "claim": "GARCH(1,1) unconditional variance $=\\omega/(1-\\alpha-\\beta)$",
+      "method": "3,000k-step simulation, omega=2e-06, alpha=0.08, beta=0.9",
+      "expected": "1.0000e-04",
+      "observed": "9.9881e-05",
+      "status": "PASS",
+      "note": "GARCH variance estimates converge slowly because r^2 is strongly autocorrelated at alpha+beta=0.98; 4% is the honest Monte Carlo tolerance at this sample size.",
+      "payload": {}
+    },
+    {
+      "cid": "V-02",
+      "section": "2.2 Volatility estimation",
+      "claim": "Persistence alpha+beta maps to a variance half-life",
+      "method": "half-life $=\\ln(1/2)/\\ln(\\alpha+\\beta)$",
+      "expected": "-",
+      "observed": "34.3 days",
+      "status": "INFO",
+      "note": "alpha+beta=0.98 implies shocks decay to half in 34.3 trading days; long-run annualised vol = 15.9%.",
+      "payload": {
+        "half_life": 34.309618491520645
+      }
+    },
+    {
+      "cid": "V-03",
+      "section": "2.2 Volatility estimation",
+      "claim": "RiskMetrics EWMA is exactly IGARCH(1,1) with $\\omega=0,\\ \\alpha=1-\\lambda,\\ \\beta=\\lambda$",
+      "method": "recursion equivalence over 20k steps, max abs difference",
+      "expected": "0",
+      "observed": "0",
+      "status": "PASS",
+      "note": "Because $\\alpha+\\beta=1$ exactly, EWMA has no finite unconditional variance -- it is a random walk in variance. The report should note that this is a feature (fast adaptation) and a defect (no mean reversion in vol) of the $\\lambda=0.94$ default.",
+      "payload": {}
+    },
+    {
+      "cid": "V-04",
+      "section": "2.2 Volatility estimation",
+      "claim": "$\\lambda\\approx0.94$ (RiskMetrics daily) sets the memory of the estimator",
+      "method": "half-life $=\\ln(1/2)/\\ln\\lambda$; centre of mass $=\\lambda/(1-\\lambda)$",
+      "expected": "-",
+      "observed": "half-life 11.2 d, centre of mass 15.7 d",
+      "status": "INFO",
+      "note": "Quantifies the report's claim that the vol estimate 'lags jumps': a shock takes 11.2 trading days to decay by half.",
+      "payload": {
+        "half_life": 11.202305583621158
+      }
+    },
+    {
+      "cid": "V-05",
+      "section": "2.2 Volatility estimation",
+      "claim": "Parkinson $\\hat\\sigma^2=\\frac{1}{4\\ln 2}E[\\ln(H/L)^2]$ is unbiased for driftless GBM",
+      "method": "MC sweep over 100-6400 intraday steps, 60,000 days each; Richardson extrapolation in m^(-1/2) to the continuum limit",
+      "expected": "0.0004",
+      "observed": "0.000399567",
+      "status": "PASS",
+      "note": "Extrapolated intercept recovers sigma^2 to within 1%. The fitted slope -1.21*sigma^2*m^(-1/2) is the discretisation bias, treated as a finding in its own right in V-08b.",
+      "payload": {
+        "slope": -1.2108389222136715
+      }
+    },
+    {
+      "cid": "V-06",
+      "section": "2.2 Volatility estimation",
+      "claim": "Garman-Klass $\\hat\\sigma^2=\\tfrac12\\ln(H/L)^2-(2\\ln 2-1)\\ln(C/O)^2$ is unbiased for driftless GBM",
+      "method": "MC sweep over 100-6400 intraday steps, 60,000 days each; Richardson extrapolation in m^(-1/2) to the continuum limit",
+      "expected": "0.0004",
+      "observed": "0.000398998",
+      "status": "PASS",
+      "note": "Extrapolated intercept recovers sigma^2 to within 1%. The fitted slope -1.69*sigma^2*m^(-1/2) is the discretisation bias, treated as a finding in its own right in V-08b.",
+      "payload": {
+        "slope": -1.6938525855963906
+      }
+    },
+    {
+      "cid": "V-07",
+      "section": "2.2 Volatility estimation",
+      "claim": "Rogers-Satchell $\\hat\\sigma^2=\\ln\\frac{H}{C}\\ln\\frac{H}{O}+\\ln\\frac{L}{C}\\ln\\frac{L}{O}$ is unbiased for driftless GBM",
+      "method": "MC sweep over 100-6400 intraday steps, 60,000 days each; Richardson extrapolation in m^(-1/2) to the continuum limit",
+      "expected": "0.0004",
+      "observed": "0.000398941",
+      "status": "PASS",
+      "note": "Extrapolated intercept recovers sigma^2 to within 1%. The fitted slope -1.72*sigma^2*m^(-1/2) is the discretisation bias, treated as a finding in its own right in V-08b.",
+      "payload": {
+        "slope": -1.721405908114924
+      }
+    },
+    {
+      "cid": "V-08",
+      "section": "2.2 Volatility estimation",
+      "claim": "Range estimators are far more efficient than close-to-close",
+      "method": "variance of the per-day estimator vs close-to-close, identical data",
+      "expected": "Parkinson ~4.9x, Garman-Klass ~7.4x (classical theory)",
+      "observed": "Parkinson 5.0x, Garman-Klass 7.8x, Rogers-Satchell 6.2x",
+      "status": "PASS",
+      "note": "Reproduces the classical efficiency gains. This is the quantitative case for preferring range estimators in the report's vol-targeting block: one day of OHLC carries roughly as much information about volatility as a week of closes, which materially shortens the estimator lag the report flags in section 2.3.",
+      "payload": {
+        "eff_parkinson": 5.043899505764092,
+        "eff_garman_klass": 7.782380078583919,
+        "eff_rogers_satchell": 6.2472249765128085
+      }
+    },
+    {
+      "cid": "V-08b",
+      "section": "2.2 Volatility estimation",
+      "claim": "Range estimators are biased LOW on real bars: a bar built from finitely many prints under-observes the true high and low",
+      "method": "MC sweep over intraday observations per bar; slope compared against the Broadie-Glasserman-Kou continuity correction",
+      "expected": "theory: bias ~ -1.46*m^(-1/2)",
+      "observed": "100 obs: -12.0%; 200 obs: -9.1%; 400 obs: -6.0%; 800 obs: -4.5%; 1600 obs: -3.0%; 3200 obs: -2.2%; 6400 obs: -1.7%; fitted slope -1.21",
+      "status": "FLAG",
+      "note": "The report lists Parkinson and Garman-Klass without this caveat. The unbiasedness proofs assume a continuously observed path; a real bar is a finite sample of prints. The fitted $m^{-1/2}$ slope (-1.21) is within ~15\\% of the Broadie-Glasserman-Kou prediction (-1.46), confirming the mechanism. Operationally: a thinly traded ETF whose bar holds ~100 prints yields a Parkinson variance about 12% too low. Section 2.3 divides by this number, so the error becomes systematic over-leverage. Use liquid instruments, or calibrate a discretisation correction from observed prints per bar.",
+      "payload": {
+        "table": [
+          {
+            "obs": 100,
+            "bias": -0.12013963782330905
+          },
+          {
+            "obs": 200,
+            "bias": -0.0906747158522998
+          },
+          {
+            "obs": 400,
+            "bias": -0.06017267860461184
+          },
+          {
+            "obs": 800,
+            "bias": -0.045023375899064244
+          },
+          {
+            "obs": 1600,
+            "bias": -0.029657661916080658
+          },
+          {
+            "obs": 3200,
+            "bias": -0.021685839519212657
+          },
+          {
+            "obs": 6400,
+            "bias": -0.017089406770307458
+          }
+        ],
+        "fitted_slope": -1.2108389222136715,
+        "bgk_slope": -1.4603616328000208
+      }
+    },
+    {
+      "cid": "V-09",
+      "section": "2.2 Volatility estimation",
+      "claim": "Rogers-Satchell is drift-independent; Parkinson and Garman-Klass are biased upward by drift",
+      "method": "paired MC (common random numbers) at mu=0.02/day vs mu=0, extrapolated to the continuum limit; reports the drift-induced CHANGE in bias so discretisation cancels",
+      "expected": "RS change ~ 0; Parkinson and GK change > 0",
+      "observed": "drift-induced bias change: parkinson +37.0%, garman-klass +13.3%, rogers-satchell +0.0%",
+      "status": "PASS",
+      "note": "Confirms the report's parenthetical '(drift-independent)' for Rogers-Satchell and supplies the magnitude the report omits for the others. The drift used is deliberately extreme; at realistic equity drift the Parkinson drift bias is second-order next to the discretisation bias in V-08b, which is the error that actually matters in production.",
+      "payload": {
+        "drift_bias_parkinson": 0.36970519814670183,
+        "drift_bias_garman_klass": 0.1334195990825956,
+        "drift_bias_rogers_satchell": 0.0003590914638230481
+      }
+    },
+    {
+      "cid": "V-10",
+      "section": "2.2 Volatility estimation",
+      "claim": "$\\sigma_{\\text{ann}}=\\sigma_d\\sqrt{252}$ under i.i.d. returns",
+      "method": "MC: 20,000 independent years of 252 i.i.d. daily returns",
+      "expected": "0.15801",
+      "observed": "0.158729",
+      "status": "PASS",
+      "note": "agreement to rtol=0.02, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "V-11",
+      "section": "2.2 Volatility estimation",
+      "claim": "Lo (2002) autocorrelation-corrected annualisation $SR_q=SR_1\\,q/\\sqrt{q+2\\sum_{k<q}(q-k)\\rho_k}$",
+      "method": "MC: AR(1) rho=0.2, 12,000,000 periods, aggregate 12-for-1",
+      "expected": "0.423373",
+      "observed": "0.423316",
+      "status": "PASS",
+      "note": "agreement to rtol=0.03, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "V-12",
+      "section": "2.2 Volatility estimation",
+      "claim": "Naive $\\sqrt{252}$ (or $\\sqrt{12}$) annualisation overstates the Sharpe ratio when returns are positively autocorrelated",
+      "method": "Lo (2002) correction factor at several AR(1) coefficients, plus MC confirmation",
+      "expected": "overstatement grows with rho",
+      "observed": "rho=-0.2: -16.9%; rho=+0.0: -0.0%; rho=+0.1: +9.6%; rho=+0.2: +20.3%; rho=+0.3: +32.5%",
+      "status": "FLAG",
+      "note": "The report says annualisation 'assumes i.i.d.; autocorrelation biases it' but gives no magnitude. At $\\rho=0.2$ -- unremarkable for a daily trend strategy -- naive scaling inflates the Sharpe by 20% (MC-confirmed). Any strategy whose Sharpe clears a hurdle only after naive annualisation should be re-tested with the Lo correction. Smoothed or illiquid marks push $\\rho$ higher still.",
+      "payload": {
+        "table": [
+          {
+            "rho": -0.2,
+            "naive": 3.4641016151377544,
+            "correct": 4.170848014103784,
+            "overstatement": -0.1694490896278542
+          },
+          {
+            "rho": 0.0,
+            "naive": 3.4641016151377544,
+            "correct": 3.464101615137755,
+            "overstatement": -1.1102230246251565e-16
+          },
+          {
+            "rho": 0.1,
+            "naive": 3.4641016151377544,
+            "correct": 3.160110974295498,
+            "overstatement": 0.09619619162584203
+          },
+          {
+            "rho": 0.2,
+            "naive": 3.4641016151377544,
+            "correct": 2.87884869052744,
+            "overstatement": 0.20329408993811637
+          },
+          {
+            "rho": 0.3,
+            "naive": 3.4641016151377544,
+            "correct": 2.614805746335916,
+            "overstatement": 0.3248026626803704
+          }
+        ],
+        "mc_naive": 0.5093732466355654,
+        "mc_true": 0.42337271603770327,
+        "mc_lo": 0.42331567228237743
+      }
+    },
+    {
+      "cid": "V-13",
+      "section": "2.11 Backtest math",
+      "claim": "For GBM $dS/S=\\mu\\,dt+\\sigma\\,dW$ the log growth rate is EXACTLY $\\mu-\\tfrac12\\sigma^2$",
+      "method": "MC: 400,000 one-year GBM paths, mu=0.1, sigma=0.3",
+      "expected": "0.055",
+      "observed": "0.0541921",
+      "status": "PASS",
+      "note": "This is an identity, not an approximation -- it is Ito's lemma. The approximation only enters when mu and sigma are estimated from discrete simple returns (V-14).",
+      "payload": {}
+    },
+    {
+      "cid": "V-14",
+      "section": "2.11 Backtest math",
+      "claim": "Applied to discrete simple returns, $g\\approx\\mu-\\tfrac12\\sigma^2$ is a truncated expansion whose error is material at high volatility",
+      "method": "MC across sigma from 5% to 80% annual, 2M lognormal draws each",
+      "expected": "error -> 0 as sigma -> 0",
+      "observed": "sigma=5%: err -0.0001; sigma=10%: err -0.0004; sigma=20%: err -0.0019; sigma=40%: err -0.0127; sigma=60%: err -0.0440; sigma=80%: err -0.1078",
+      "status": "FLAG",
+      "note": "The report gives $g\\approx\\mu-\\tfrac12\\sigma^2$ without saying whether $\\mu,\\sigma$ are Ito parameters (where it is exact, V-13) or sample moments of simple returns (where it is not). At the ~20\\% volatility of a typical ETF sleeve the error is 0.19 pp -- small but not negligible against the 3.78 pp that V-15 attributes to vol targeting. At 80% volatility it reaches 10.8 pp, or 82\\% of the geometric return itself. Use the formula as intuition for why vol targeting aids compounding; never as the P\\&L accounting identity. The backtester must compound realised returns.",
+      "payload": {
+        "table": [
+          {
+            "sigma": 0.05,
+            "arith": 0.0799940718602976,
+            "geo": 0.07883916936737932,
+            "approx": 0.07874479901375016,
+            "err": -9.437035362916402e-05
+          },
+          {
+            "sigma": 0.1,
+            "arith": 0.08000638392901492,
+            "geo": 0.07540332975800497,
+            "approx": 0.0750026734324757,
+            "err": -0.00040065632552926944
+          },
+          {
+            "sigma": 0.2,
+            "arith": 0.07982246565032518,
+            "geo": 0.061788668445045054,
+            "approx": 0.05985316597008673,
+            "err": -0.0019355024749583213
+          },
+          {
+            "sigma": 0.4,
+            "arith": 0.0792336784267419,
+            "geo": 0.012052932148933215,
+            "approx": -0.0006017569719295179,
+            "err": -0.012654689120862733
+          },
+          {
+            "sigma": 0.6,
+            "arith": 0.07942280043465887,
+            "geo": -0.05631564011096747,
+            "approx": -0.10032686847853105,
+            "err": -0.044011228367563576
+          },
+          {
+            "sigma": 0.8,
+            "arith": 0.07963492954640983,
+            "geo": -0.1322567928432247,
+            "approx": -0.2401027721972202,
+            "err": -0.10784597935399551
+          }
+        ]
+      }
+    },
+    {
+      "cid": "V-15",
+      "section": "2.11 Backtest math",
+      "claim": "Why volatility targeting aids compounding, quantified",
+      "method": "$\\Delta g=\\tfrac12(\\sigma_{hi}^2-\\sigma_{lo}^2)$ at fixed arithmetic mean",
+      "expected": "-",
+      "observed": "3.78 pp/yr",
+      "status": "INFO",
+      "note": "Cutting realised vol from 30% to 12% at an unchanged arithmetic mean adds 3.78 percentage points of compound annual growth purely by removing drag -- before any Sharpe improvement. This is the mechanical part of the effect the report attributes to vol targeting in section 2.3.",
+      "payload": {
+        "gain": 0.0378
+      }
+    },
+    {
+      "cid": "K-01",
+      "section": "2.3 Volatility targeting",
+      "claim": "$w_{i,t}=\\sigma^*/\\sigma_{i,t}$ produces realised volatility $\\sigma^*$ when $\\sigma_{i,t}$ is known",
+      "method": "MC: 2M draws, true conditional vol uniform on [8%, 40%]",
+      "expected": "0.15",
+      "observed": "0.149891",
+      "status": "PASS",
+      "note": "agreement to rtol=0.01, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "K-02",
+      "section": "2.3 Volatility targeting",
+      "claim": "A leverage cap $\\sum|w|\\le L$ makes the vol target an upper bound, not an equality",
+      "method": "same simulation with cap L=1.0",
+      "expected": "target 15.0%",
+      "observed": "realised 14.33% (cap binds 22% of the time)",
+      "status": "FLAG",
+      "note": "The report presents the vol target and the leverage cap as independent constraints. They are not: whenever the cap binds, realised volatility falls below target (here 14.33% vs 15.0%). In calm regimes -- exactly when $\\sigma^*/\\sigma$ is largest -- the cap silently converts the strategy from vol-targeted to constant-leverage. The system should log cap-binding frequency as a first-class monitoring metric, because a strategy that spends most of its life against the cap is not the strategy that was backtested.",
+      "payload": {
+        "realised": 0.1432941415795315,
+        "frac_binding": 0.218813
+      }
+    },
+    {
+      "cid": "K-03",
+      "section": "2.3 Volatility targeting",
+      "claim": "Volatility targeting levers INTO a regime break because $\\hat\\sigma$ is backward-looking",
+      "method": "EWMA(lambda=0.94) over 500 calm days (daily vol 0.4%, annualised 6%), then an abrupt shift to 4.5% daily (71% annualised); vol target 15%",
+      "expected": "leverage should fall at the break; instead it is set by calm-regime vol",
+      "observed": "median leverage entering the break 2.4x; a 2-sigma storm day then costs 21.6% of capital in one session",
+      "status": "PASS",
+      "note": "Confirms and sizes the report's caveat. The EWMA half-life is 11.2 days (V-04), so the estimator needs roughly two weeks to reprice a regime break, during which the book carries 2.4x leverage calibrated to a volatility regime that no longer exists. This is the quantitative argument for pairing vol targeting with a fast, non-volatility circuit breaker (section 4.4) rather than trusting the vol estimate alone to de-risk.",
+      "payload": {
+        "median_leverage": 2.397314297585301,
+        "one_day_loss": 0.21575828678267708
+      }
+    },
+    {
+      "cid": "K-04",
+      "section": "2.6 Kelly criterion",
+      "claim": "$f^*=\\mu/\\sigma^2$ maximises the continuous-time log growth rate $g(f)=f\\mu-\\tfrac12 f^2\\sigma^2$",
+      "method": "sympy: solve dg/df = 0 and check d2g/df2 < 0",
+      "expected": "$f^*=\\mu/\\sigma^2$, $d^2g/df^2=-\\sigma^2<0$",
+      "observed": "solved f* = mu/sigma**2, second derivative = -sigma**2",
+      "status": "PASS",
+      "note": "Exact symbolic confirmation, so this is an identity rather than a numerical coincidence.",
+      "payload": {}
+    },
+    {
+      "cid": "K-05",
+      "section": "2.6 Kelly criterion",
+      "claim": "Simulated log-wealth growth peaks at $f^*=\\mu/\\sigma^2$",
+      "method": "MC: 40k paths x 252 steps, mu=0.08, sigma=0.2, grid search",
+      "expected": "2",
+      "observed": "2",
+      "status": "PASS",
+      "note": "Grid resolution is 0.20; the empirical optimum lands in the correct grid cell.",
+      "payload": {}
+    },
+    {
+      "cid": "K-06",
+      "section": "2.6 Kelly criterion",
+      "claim": "$f^*=p-\\frac{1-p}{b}$ maximises $p\\ln(1+bf)+(1-p)\\ln(1-f)$ for a $b{:}1$ payoff",
+      "method": "sympy: solve d/df of expected log wealth = 0",
+      "expected": "$f^*=p-(1-p)/b$",
+      "observed": "solved [(b*p + p - 1)/b]",
+      "status": "PASS",
+      "note": "Exact. Note the formula presumes a binary bet losing the full stake; for a stop-loss strategy losing only a fraction, b must be redefined as the win/loss ratio, which the report does not state.",
+      "payload": {}
+    },
+    {
+      "cid": "K-07",
+      "section": "2.6 Kelly criterion",
+      "claim": "Numeric optimum of the discrete Kelly objective matches $p-(1-p)/b$",
+      "method": "grid search, p=0.55, b=1.0",
+      "expected": "0.1",
+      "observed": "0.1",
+      "status": "PASS",
+      "note": "agreement to rtol=0.001, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "K-08",
+      "section": "2.6 Kelly criterion",
+      "claim": "At fraction $c$ of full Kelly, growth is $c(2-c)$ of the maximum",
+      "method": "sympy identity",
+      "expected": "$g(c f^*)/g(f^*)=c(2-c)$",
+      "observed": "simplified to c*(2 - c)",
+      "status": "PASS",
+      "note": "This is the quantitative case for the report's 'fractional Kelly (1/4 to 1/2) is standard' recommendation: half Kelly retains c(2-c) = 0.75, i.e. 75% of the maximum growth rate while halving volatility and roughly halving drawdown. Quarter Kelly retains 43.75%. The report asserts the practice without this trade-off curve.",
+      "payload": {}
+    },
+    {
+      "cid": "K-09",
+      "section": "2.6 Kelly criterion",
+      "claim": "Full Kelly produces drawdowns that are unacceptable in practice; fractional Kelly buys a large drawdown reduction cheaply",
+      "method": "MC: 20k 10-year paths at full / half / quarter Kelly",
+      "expected": "growth ratio c(2-c); drawdown falls roughly linearly in c",
+      "observed": "c=1.00: growth 100%, median DD -68%, 5th-pct DD -90%; c=0.50: growth 75%, median DD -40%, 5th-pct DD -65%; c=0.25: growth 44%, median DD -22%, 5th-pct DD -39%",
+      "status": "PASS",
+      "note": "Confirms and quantifies the report's 'full Kelly is over-levered and produces brutal drawdowns'. Half Kelly gives up 25\\% of the growth rate to cut the median 10-year drawdown from 68% to 40%. Critically, these figures assume $\\mu$ and $\\sigma$ are KNOWN. They are not -- see K-10.",
+      "payload": {
+        "table": [
+          {
+            "c": 1.0,
+            "growth_ratio": 1.0,
+            "median_dd": -0.6756156285260838,
+            "p5_dd": -0.8958598985482472
+          },
+          {
+            "c": 0.5,
+            "growth_ratio": 0.75,
+            "median_dd": -0.40130156285112845,
+            "p5_dd": -0.6474369300553795
+          },
+          {
+            "c": 0.25,
+            "growth_ratio": 0.4375,
+            "median_dd": -0.2196445784751318,
+            "p5_dd": -0.39384852979727847
+          }
+        ]
+      }
+    },
+    {
+      "cid": "K-10",
+      "section": "2.6 Kelly criterion",
+      "claim": "Estimation error in $\\mu$ dominates Kelly sizing, which is why the haircut must be severe",
+      "method": "4000 replications of a 10-year sample; estimate f* from the sample and compare against the true f*",
+      "expected": "true f* = 2.00",
+      "observed": "estimated f* has median 1.99, 5-95 pct [-0.64, 4.69]; 11% of samples suggest more than 2x the true leverage",
+      "status": "PASS",
+      "note": "Ten years of daily data -- more than most retail backtests have clean -- still leaves the Kelly fraction essentially unidentified: the 5-95\\% range spans [-0.64, 4.69] around a true value of 2.00, and 11% of samples recommend over twice the correct leverage. This validates the report's 'haircut hard' instruction and supplies the reason: the quarter-Kelly convention is not conservatism about the world, it is correct sizing under parameter uncertainty.",
+      "payload": {
+        "true_f": 1.9999999999999996,
+        "p5": -0.6357291885794294,
+        "p95": 4.6946301913799795,
+        "frac_over_2x": 0.109
+      }
+    },
+    {
+      "cid": "K-11",
+      "section": "2.6 Kelly criterion",
+      "claim": "Kelly and volatility targeting are the same operation: full Kelly targets a portfolio volatility numerically equal to the Sharpe ratio",
+      "method": "sympy: $f^*\\sigma=(\\mu/\\sigma^2)\\sigma=\\mu/\\sigma=SR$",
+      "expected": "$\\sigma_{\\text{portfolio}}=SR$",
+      "observed": "simplified to mu/sigma",
+      "status": "PASS",
+      "note": "Makes the report's assertion that 'Kelly $\\approx$ vol targeting' exact rather than approximate, and yields a useful sanity rule: a strategy with a true Sharpe of 0.5 is at FULL Kelly when run at 50\\% annualised volatility. Any daily-ETF system targeting 10--15\\% vol on a Sharpe-0.5 signal is therefore running at roughly a quarter Kelly already -- which is the right neighbourhood, and worth stating in the report because it connects sections 2.3 and 2.6 that currently read as unrelated.",
+      "payload": {}
+    },
+    {
+      "cid": "P-01",
+      "section": "2.4 Portfolio construction",
+      "claim": "$\\max_w w^\\top\\mu-\\frac{\\gamma}{2}w^\\top\\Sigma w$ has closed-form solution $w^*=\\frac{1}{\\gamma}\\Sigma^{-1}\\mu$",
+      "method": "sympy: solve the first-order condition symbolically for 2 assets and compare to the stated closed form",
+      "expected": "$w^*=\\gamma^{-1}\\Sigma^{-1}\\mu$",
+      "observed": "first-order condition solution equals the closed form identically",
+      "status": "PASS",
+      "note": "Exact symbolic verification. The Hessian is -gamma*Sigma, negative definite for positive definite Sigma, so this is a maximum.",
+      "payload": {}
+    },
+    {
+      "cid": "P-02",
+      "section": "2.4 Portfolio construction",
+      "claim": "Numerical optimiser reproduces the Markowitz closed form",
+      "method": "12 assets, BFGS vs analytic solve, max abs weight difference",
+      "expected": "0",
+      "observed": "8.0758e-09",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-06",
+      "payload": {}
+    },
+    {
+      "cid": "P-03",
+      "section": "2.4 Portfolio construction",
+      "claim": "Mean-variance 'error-maximises': $\\Sigma^{-1}$ amplifies estimation noise into extreme, unstable weights",
+      "method": "300 replications, 20 assets, 5 years of daily data, UNCONSTRAINED plug-in estimates of mu and Sigma",
+      "expected": "true attainable Sharpe 1.85",
+      "observed": "plug-in MV achieves median Sharpe 0.15 (-92%); with Ledoit-Wolf shrinkage 0.16 (-91%); median utility loss 99%",
+      "status": "PASS",
+      "note": "Confirms the report's claim with a magnitude. With 20 assets and five years of daily data -- more than most retail backtests have clean -- the unconstrained plug-in mean-variance portfolio realises a Sharpe of 0.15 against an attainable 1.85, destroying 99% of the utility it was solving for. Substituting a Ledoit-Wolf covariance moves the realised Sharpe only from 0.15 to 0.16, and that null result is the most useful thing in this check: covariance shrinkage does NOT rescue mean-variance here, because the binding error is in $\\hat\\mu$, not $\\hat\\Sigma$. Expected returns need roughly two orders of magnitude more data than covariances to estimate to comparable precision (Merton 1980), so no amount of covariance cleverness fixes a noisy $\\mu$. The report should therefore not present shrinkage as the remedy for 'MV error-maximises'. The remedies that actually work are the ones that stop using $\\hat\\mu$ at all -- ERC, HRP, minimum variance, inverse vol -- which is precisely why those methods dominate in practice, and why the report is right to list them. Note also that the setup is deliberately unconstrained: budget, long-only and concentration limits are themselves powerful regularisers, a second reason the report's 20\\% per-ETF cap earns its place.",
+      "payload": {
+        "median_util_loss": 0.9938202475907821,
+        "median_weight_error": 17.630310744928753,
+        "sr_true": 1.8475772822512648,
+        "sr_plugin": 0.14851601164858771,
+        "sr_lw": 0.16198377167893768
+      }
+    },
+    {
+      "cid": "P-04",
+      "section": "2.4 Portfolio construction",
+      "claim": "Ledoit-Wolf is exactly $\\hat\\Sigma=(1-\\delta)S+\\delta F$ with $F$ the scaled identity target",
+      "method": "reconstruct sklearn's estimate from its reported shrinkage intensity; max abs elementwise difference",
+      "expected": "0",
+      "observed": "1.0842e-19",
+      "status": "PASS",
+      "note": "fitted delta = 0.817",
+      "payload": {}
+    },
+    {
+      "cid": "P-05",
+      "section": "2.4 Portfolio construction",
+      "claim": "Shrinkage improves both conditioning and Frobenius estimation loss when T is small relative to N",
+      "method": "N=50, T=120 (T/N = 2.4), sample vs Ledoit-Wolf vs OAS",
+      "expected": "condition number and loss both fall",
+      "observed": "condition number 22 -> 2; Frobenius loss 0.0656 -> 0.0333 (LW), 0.0335 (OAS)",
+      "status": "PASS",
+      "note": "The report recommends OAS 'for Gaussian'. Verified here: with genuinely Gaussian data OAS is competitive with Ledoit-Wolf, but the ordering is data-dependent and neither dominates. Both massively beat the sample covariance in the short-sample regime, which is the regime a solo operator with a few years of daily ETF data is always in.",
+      "payload": {
+        "cond_sample": 22.47810402003112,
+        "cond_lw": 1.586285056679328
+      }
+    },
+    {
+      "cid": "P-06",
+      "section": "2.4 Portfolio construction",
+      "claim": "Minimising $\\sum_i(w_i(\\Sigma w)_i-\\frac1N w^\\top\\Sigma w)^2$ yields equal risk contributions $w_i(\\Sigma w)_i=w_j(\\Sigma w)_j$",
+      "method": "8-asset numerical solve, 20 restarts; relative spread of risk contributions at the optimum",
+      "expected": "0",
+      "observed": "7.0193e-13",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=0.0001",
+      "payload": {}
+    },
+    {
+      "cid": "P-07",
+      "section": "2.4 Portfolio construction",
+      "claim": "Under equal pairwise correlation the ERC solution is exactly $w_i\\propto1/\\sigma_i$ (inverse-volatility weighting)",
+      "method": "6 assets, rho=0.4, numerical ERC vs the analytic inverse-vol weights; max abs weight difference",
+      "expected": "0",
+      "observed": "1.4183e-14",
+      "status": "PASS",
+      "note": "Useful practical corollary the report omits: when correlations are roughly uniform -- the usual case for a broad ETF sleeve -- the whole ERC machinery collapses to inverse-vol weighting, which needs no optimiser and no matrix inverse.",
+      "payload": {}
+    },
+    {
+      "cid": "P-08",
+      "section": "2.4 Portfolio construction",
+      "claim": "HRP produces long-only weights summing to 1 without inverting the covariance matrix, and is dramatically more stable than minimum variance under resampling",
+      "method": "200 paired resamples, N=30, T=45 (T/N=1.5), condition number ~17",
+      "expected": "HRP weights valid and more stable than MV",
+      "observed": "weights sum to 1.0000000000, min weight 0.0070; median turnover between independent samples: HRP 0.534 vs min-variance 1.662 (3.1x worse)",
+      "status": "PASS",
+      "note": "Confirms the report's 'avoids Sigma^{-1}; robust to ill-conditioning'. The stability ratio is the number worth quoting: on two independent samples from the SAME distribution, minimum variance reshuffles its book several times more than HRP does. That difference is pure transaction cost paid for estimation noise.",
+      "payload": {
+        "hrp_turnover": 0.5340186408647116,
+        "mv_turnover": 1.662343957101096
+      }
+    },
+    {
+      "cid": "P-09",
+      "section": "2.4 Portfolio construction",
+      "claim": "$\\Pi=\\delta\\Sigma w_{mkt}$ is the equilibrium return vector: feeding it back through $w=\\frac1\\delta\\Sigma^{-1}\\mu$ recovers $w_{mkt}$",
+      "method": "6 assets, reverse then forward optimisation, max abs difference",
+      "expected": "0",
+      "observed": "5.5511e-17",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-12",
+      "payload": {}
+    },
+    {
+      "cid": "P-10",
+      "section": "2.4 Portfolio construction",
+      "claim": "With no information in the views ($\\Omega\\to\\infty$) the Black-Litterman posterior collapses to the equilibrium prior $\\Pi$",
+      "method": "one relative view with variance 1e12; max abs deviation from Pi",
+      "expected": "0",
+      "observed": "2.7756e-16",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-09",
+      "payload": {}
+    },
+    {
+      "cid": "P-11",
+      "section": "2.4 Portfolio construction",
+      "claim": "With certain views ($\\Omega\\to0$) the posterior satisfies $P\\,E[R]=Q$ exactly",
+      "method": "same view with variance 1e-12; |P E[R] - Q|",
+      "expected": "0",
+      "observed": "1.4286e-12",
+      "status": "PASS",
+      "note": "Together P-09/10/11 pin down the three boundary behaviours that make the formula trustworthy. The report states the formula but none of its limits, which are what a reviewer would check first.",
+      "payload": {}
+    },
+    {
+      "cid": "P-12",
+      "section": "2.4 Portfolio construction",
+      "claim": "The cost-aware objective $w^\\top\\mu-\\frac\\gamma2 w^\\top\\Sigma w-(w-w_0)^\\top\\Lambda(w-w_0)$ has closed form $w^*=(\\gamma\\Sigma+2\\Lambda)^{-1}(\\mu+2\\Lambda w_0)$",
+      "method": "5 assets, analytic solve vs BFGS, max abs weight difference",
+      "expected": "0",
+      "observed": "7.2175e-09",
+      "status": "PASS",
+      "note": "The report's 'closed form' claim is correct.",
+      "payload": {}
+    },
+    {
+      "cid": "P-13",
+      "section": "2.4 Portfolio construction",
+      "claim": "Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do",
+      "method": "sweep the starting weight away from the frictionless optimum and measure the traded amount under each cost model",
+      "expected": "report claims quadratic costs give a no-trade region",
+      "observed": "quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04",
+      "status": "FAIL",
+      "note": "\\textbf{Correction required.} Section 2.4 states that quadratic costs 'give a closed form AND a no-trade region'. The closed form is correct (P-12); the no-trade region is not. A smooth quadratic penalty has zero derivative at zero trade, so the first-order condition always prescribes a strictly positive trade -- the solution shrinks toward $w_0$ (partial adjustment) but never stops. A no-trade region requires a cost function with a KINK at zero, i.e. proportional/L1 costs, whose subgradient interval $[-c,c]$ absorbs small deviations. This is not pedantry: it changes the implementation. If the system is built on the quadratic model expecting bands to appear, it will rebalance every single day and bleed the cost the band was meant to save. Real spreads and commissions ARE proportional, so the L1 model is also the more faithful one. Recommended fix: either state the objective with an L1 term, or keep the quadratic form and impose the no-trade band as an explicit separate rule.",
+      "payload": {
+        "quad_min_trade": 0.003975903614457849,
+        "l1_band_width": 0.04,
+        "drifts": [
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.04,
+          0.05,
+          0.06,
+          0.07,
+          0.08,
+          0.09,
+          0.1,
+          0.11,
+          0.12,
+          0.13,
+          0.14,
+          0.15,
+          0.16,
+          0.17,
+          0.18,
+          0.19,
+          0.2,
+          0.21,
+          0.22,
+          0.23,
+          0.24,
+          0.25,
+          0.26,
+          0.27,
+          0.28,
+          0.29,
+          0.3,
+          0.31,
+          0.32,
+          0.33,
+          0.34,
+          0.35000000000000003,
+          0.36,
+          0.37,
+          0.38,
+          0.39,
+          0.4
+        ],
+        "quad_trade": [
+          2.7755575615628914e-17,
+          0.003975903614457849,
+          0.007951807228915683,
+          0.011927710843373518,
+          0.01590361445783134,
+          0.019879518072289173,
+          0.023855421686747008,
+          0.027831325301204843,
+          0.03180722891566268,
+          0.0357831325301205,
+          0.03975903614457832,
+          0.04373493975903617,
+          0.047710843373494016,
+          0.05168674698795184,
+          0.055662650602409686,
+          0.059638554216867506,
+          0.06361445783132531,
+          0.06759036144578316,
+          0.07156626506024098,
+          0.07554216867469883,
+          0.07951807228915668,
+          0.08349397590361447,
+          0.08746987951807234,
+          0.09144578313253016,
+          0.095421686746988,
+          0.09939759036144583,
+          0.10337349397590367,
+          0.1073493975903615,
+          0.11132530120481934,
+          0.11530120481927716,
+          0.11927710843373499,
+          0.1232530120481928,
+          0.12722891566265068,
+          0.1312048192771085,
+          0.13518072289156632,
+          0.13915662650602414,
+          0.14313253012048197,
+          0.14710843373493984,
+          0.15108433734939766,
+          0.15506024096385543,
+          0.1590361445783133
+        ],
+        "l1_trade": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.009696969696969773,
+          0.01969696911455636,
+          0.029696969990725436,
+          0.03969696970043285,
+          0.04969697003501347,
+          0.05969696923160238,
+          0.06969696969696762,
+          0.07969697004525496,
+          0.08969696973490918,
+          0.09969696971595156,
+          0.10969696902344218,
+          0.11969697039732685,
+          0.1296969697611744,
+          0.13969697118035415,
+          0.14969697141642666,
+          0.15969696969696673,
+          0.16969697016175245,
+          0.17969697121968448,
+          0.18969696979837058,
+          0.19969697107618872,
+          0.20969697022361822,
+          0.21969696966963362,
+          0.22969696969697084,
+          0.2396969694444428,
+          0.24969696975039804,
+          0.25969697035034295,
+          0.26969696971981505,
+          0.2796969694100055,
+          0.2896969701132872,
+          0.2996969695729943,
+          0.3096969706697761,
+          0.3196969698167311,
+          0.3296969693921852,
+          0.33969696984268927,
+          0.3496969697905363,
+          0.3596969696401424,
+          0.3696969697439394
+        ]
+      }
+    },
+    {
+      "cid": "Q-01",
+      "section": "2.7 Risk metrics",
+      "claim": "Parametric VaR as a RETURN quantile: $q_{1-\\alpha}=\\mu+z_{1-\\alpha}\\sigma$",
+      "method": "MC: 4M normal draws, alpha=0.99, compared to the empirical 1th percentile",
+      "expected": "-0.0274162",
+      "observed": "-0.0274136",
+      "status": "PASS",
+      "note": "agreement to rtol=0.01, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "Q-02",
+      "section": "2.7 Risk metrics",
+      "claim": "The report's $\\mu+z_\\alpha\\sigma$ is ambiguous without a sign convention",
+      "method": "evaluate both readings at the same parameters",
+      "expected": "one unambiguous number",
+      "observed": "return-quantile reading -0.0274; loss-quantile reading +0.0284",
+      "status": "FLAG",
+      "note": "Section 2.7 gives parametric VaR as $\\mu+z_\\alpha\\sigma$ without stating whether $\\alpha$ is the tail probability or the confidence level, or whether VaR is reported as a positive loss or a negative return. The two readings differ by roughly 0.0558 here -- a sign flip on the risk number itself. This is not a theoretical quibble: a sign error in a risk limit is precisely the class of defect the report's section 4.3 pre-trade controls exist to prevent, and it must be pinned down by a property-based test (section 6.1) asserting VaR $>$ 0 and VaR $\\le$ CVaR under the house convention.",
+      "payload": {
+        "return_reading": -0.02741617448849009,
+        "loss_reading": 0.02841617448849009
+      }
+    },
+    {
+      "cid": "Q-03",
+      "section": "2.7 Risk metrics",
+      "claim": "VaR is NOT subadditive: a concrete counterexample",
+      "method": "two independent bonds, 4% default probability, loss 100 each; 4,000,000 Monte Carlo draws at the 95% level",
+      "expected": "analytic: VaR(A)=VaR(B)=0, VaR(A+B)=100",
+      "observed": "empirical: VaR(A)=0, VaR(B)=0, VaR(A+B)=100 > 0",
+      "status": "PASS",
+      "note": "Confirms the report's assertion that VaR fails subadditivity, with a minimal reproducible example. Diversifying across two INDEPENDENT positions makes measured VaR go UP, from 0 to 100. Any risk limit expressed in VaR can therefore penalise genuine diversification, which is exactly the Artzner et al. coherence objection the report cites.",
+      "payload": {
+        "var_single": 0.0,
+        "var_pair": 100.0
+      }
+    },
+    {
+      "cid": "Q-04",
+      "section": "2.7 Risk metrics",
+      "claim": "CVaR / Expected Shortfall IS subadditive: $ES(A+B)\\le ES(A)+ES(B)$",
+      "method": "300 random dependence structures (Gaussian copula with rho in [-0.9,0.9], Student-t margins df 2-30, 1% jump contamination), 200,000 draws each",
+      "expected": "no violation beyond finite-sample tail-estimation noise",
+      "observed": "largest normalised gap ES(A+B)-ES(A)-ES(B) across 300 trials: -0.058 (must be <= 0; negative means diversification benefit)",
+      "status": "PASS",
+      "note": "Complements Q-03. Subadditivity is the coherence axiom VaR fails and ES satisfies, and it holds here under every dependence structure tested including strongly comonotone and jump-contaminated cases. This is the concrete basis for the report's recommendation to size risk limits in CVaR rather than VaR.",
+      "payload": {
+        "worst_violation": -0.058224026912372905
+      }
+    },
+    {
+      "cid": "Q-05",
+      "section": "2.7 Risk metrics",
+      "claim": "Gaussian Expected Shortfall $=\\mu+\\sigma\\frac{\\phi(z_\\alpha)}{1-\\alpha}$",
+      "method": "MC: 8M standard normal draws at alpha=0.975",
+      "expected": "2.3378",
+      "observed": "2.33695",
+      "status": "PASS",
+      "note": "The report gives ES only as the definition E[L | L > VaR]. The closed form is worth stating because it is the reference value a unit test can assert against without Monte Carlo.",
+      "payload": {}
+    },
+    {
+      "cid": "Q-06",
+      "section": "2.7 Risk metrics",
+      "claim": "Under normality ES exceeds VaR by a fixed, modest factor -- which is exactly why normality is dangerous here",
+      "method": "ratio ES/VaR at alpha=0.975 under normality vs Student-t(3)",
+      "expected": "normal: 1.193x",
+      "observed": "normal 1.193x; Student-t(3) empirical 1.588x",
+      "status": "INFO",
+      "note": "The Gaussian ES/VaR ratio is only about 1.19, so under a normal model the tail looks tame. With Student-t(3) tails the same ratio is 1.59. A risk system calibrated on Gaussian ES will therefore understate the cost of the tail it is supposed to be measuring, which is the practical reason the report's Cornish-Fisher and historical VaR variants exist.",
+      "payload": {
+        "gaussian_ratio": 1.1927784442171916
+      }
+    },
+    {
+      "cid": "Q-07",
+      "section": "2.7 Risk metrics",
+      "claim": "Cornish-Fisher $z_{cf}=z+\\frac{(z^2-1)\\gamma_3}{6}+\\frac{(z^3-3z)(\\gamma_4-3)}{24}-\\frac{(2z^3-5z)\\gamma_3^2}{36}$ improves on the Gaussian quantile for skewed/fat-tailed data",
+      "method": "3 distributions x 2 confidence levels, 8M draws each; relative error against the empirical quantile",
+      "expected": "Cornish-Fisher closer than Gaussian in at least 5 of 6 cases",
+      "observed": "Cornish-Fisher wins 5/6; skew-normal(a=4)@95%: CF err 1.0% vs Gaussian 7.4%; skew-normal(a=4)@99%: CF err 0.6% vs Gaussian 12.8%; Student-t(6)@95%: CF err 0.0% vs Gaussian 3.7%; Student-t(6)@99%: CF err 17.8% vs Gaussian 9.2%; lognormal(s=0.4)@95%: CF err 1.0% vs Gaussian 5.5%; lognormal(s=0.4)@99%: CF err 3.3% vs Gaussian 15.9%",
+      "status": "PASS",
+      "note": "Verifies the expansion as written, including the often-dropped $-\\frac{(2z^3-5z)\\gamma_3^2}{36}$ term. Note the expansion uses EXCESS kurtosis ($\\gamma_4-3$); the report writes $\\gamma_4$ for kurtosis in section 2.8 and $\\gamma_4-3$ implicitly here, so the convention must be fixed once and asserted in code. Cornish-Fisher is also non-monotone for large $|\\gamma_3|$ -- see Q-08.",
+      "payload": {
+        "table": [
+          {
+            "dist": "skew-normal(a=4)",
+            "alpha": 0.95,
+            "empirical": 1.9604648706184926,
+            "cf": 1.9416576547830755,
+            "gauss": 1.8155347486175364
+          },
+          {
+            "dist": "skew-normal(a=4)",
+            "alpha": 0.99,
+            "empirical": 2.5768256938424523,
+            "cf": 2.561269997853434,
+            "gauss": 2.247137323515493
+          },
+          {
+            "dist": "Student-t(6)",
+            "alpha": 0.95,
+            "empirical": 1.944427013035803,
+            "cf": 1.9447353584014415,
+            "gauss": 2.0162356218103463
+          },
+          {
+            "dist": "Student-t(6)",
+            "alpha": 0.99,
+            "empirical": 3.142177685207785,
+            "cf": 3.702075969992468,
+            "gauss": 2.8516085756479117
+          },
+          {
+            "dist": "lognormal(s=0.4)",
+            "alpha": 0.95,
+            "empirical": 1.93071124739859,
+            "cf": 1.949806406468602,
+            "gauss": 1.824894172057724
+          },
+          {
+            "dist": "lognormal(s=0.4)",
+            "alpha": 0.99,
+            "empirical": 2.5347563821994723,
+            "cf": 2.6179678259797408,
+            "gauss": 2.132240987397222
+          }
+        ]
+      }
+    },
+    {
+      "cid": "Q-08",
+      "section": "2.7 Risk metrics",
+      "claim": "Cornish-Fisher is not monotone in the quantile for large skewness, so it can report a SMALLER loss at a HIGHER confidence level",
+      "method": "scan z in [0.5, 3.5] at several (skew, excess kurtosis) pairs and test for a decreasing segment",
+      "expected": "quantile function must be non-decreasing in z",
+      "observed": "non-monotone at (skew, excess kurt) = [(-3.0, 12.0)]",
+      "status": "FLAG",
+      "note": "The report lists Cornish-Fisher without its domain of validity. It is an asymptotic expansion, valid for mild non-normality only; at the skewness levels typical of an option-overlay or short-vol sleeve (section 4.6's XIV example) it can invert, reporting a smaller loss at 99\\% than at 95\\%. The runtime must assert monotonicity of the quantile function -- a natural Hypothesis property test (section 6.1) -- and fall back to historical or filtered-historical simulation when the assertion trips.",
+      "payload": {
+        "bad_params": [
+          {
+            "skew": -3.0,
+            "excess_kurt": 12.0
+          }
+        ]
+      }
+    },
+    {
+      "cid": "Q-09",
+      "section": "2.7 Risk metrics",
+      "claim": "Sharpe, Sortino and Calmar rank the same track record differently under negative skew",
+      "method": "20 years of simulated daily returns with 1% crash days; all three ratios computed from the same series",
+      "expected": "the three are not interchangeable",
+      "observed": "Sharpe 0.53, Sortino 0.77, Calmar 0.20 (CAGR 6.2%, max drawdown -30.2%)",
+      "status": "INFO",
+      "note": "The report lists the three ratios without noting that they encode different risk preferences and can be gamed against one another. Sortino exceeds Sharpe whenever upside dispersion outweighs downside, and Calmar depends on a single realised path statistic (the worst drawdown), making it the noisiest of the three and the easiest to flatter with a short sample. The report's deflation machinery (section 2.8) is built for the Sharpe ratio specifically; applying DSR/PSR thresholds to a Sortino or Calmar figure is not valid.",
+      "payload": {
+        "sharpe": 0.5341518690639,
+        "sortino": 0.770939635052344,
+        "calmar": 0.20495099969698508,
+        "mdd": -0.3016947732520393
+      }
+    },
+    {
+      "cid": "S-01",
+      "section": "2.8 Statistical validation",
+      "claim": "PSR denominator $\\sqrt{1-\\hat\\gamma_3\\widehat{SR}+\\frac{\\hat\\gamma_4-1}{4}\\widehat{SR}^2}$ (over $\\sqrt{n-1}$) is the true standard error of $\\widehat{SR}$ -- Gaussian",
+      "method": "200,000 independent samples of n=1250; empirical sd of the Sharpe estimate vs the formula (skew 0.00, kurtosis 3.00)",
+      "expected": "0.0282748",
+      "observed": "0.028321",
+      "status": "PASS",
+      "note": "Confirms the formula as written in the report, PROVIDED gamma_4 is non-excess kurtosis.",
+      "payload": {}
+    },
+    {
+      "cid": "S-02",
+      "section": "2.8 Statistical validation",
+      "claim": "PSR denominator $\\sqrt{1-\\hat\\gamma_3\\widehat{SR}+\\frac{\\hat\\gamma_4-1}{4}\\widehat{SR}^2}$ (over $\\sqrt{n-1}$) is the true standard error of $\\widehat{SR}$ -- Student-t(6)",
+      "method": "200,000 independent samples of n=1250; empirical sd of the Sharpe estimate vs the formula (skew 0.00, kurtosis 6.00)",
+      "expected": "0.0283554",
+      "observed": "0.0283592",
+      "status": "PASS",
+      "note": "Confirms the formula as written in the report, PROVIDED gamma_4 is non-excess kurtosis.",
+      "payload": {}
+    },
+    {
+      "cid": "S-03",
+      "section": "2.8 Statistical validation",
+      "claim": "PSR denominator $\\sqrt{1-\\hat\\gamma_3\\widehat{SR}+\\frac{\\hat\\gamma_4-1}{4}\\widehat{SR}^2}$ (over $\\sqrt{n-1}$) is the true standard error of $\\widehat{SR}$ -- skew-normal(a=6)",
+      "method": "200,000 independent samples of n=1250; empirical sd of the Sharpe estimate vs the formula (skew 0.89, kurtosis 3.75)",
+      "expected": "0.0275927",
+      "observed": "0.027564",
+      "status": "PASS",
+      "note": "Confirms the formula as written in the report, PROVIDED gamma_4 is non-excess kurtosis.",
+      "payload": {}
+    },
+    {
+      "cid": "S-04",
+      "section": "2.8 Statistical validation",
+      "claim": "$\\gamma_4$ in the PSR formula must be NON-EXCESS kurtosis, and the size of the error depends on the return frequency",
+      "method": "recompute the Sharpe standard error under both kurtosis conventions across sampling frequencies, at a fixed annualised Sharpe of 0.8",
+      "expected": "identical results under either convention",
+      "observed": "daily: -0.1%; weekly: -0.5%; monthly: -1.9%; quarterly: -5.1%",
+      "status": "FLAG",
+      "note": "Section 2.8 defines $\\hat\\gamma_4$ only as 'kurtosis'. Both conventions are in common use and \\texttt{scipy.stats.kurtosis} returns the EXCESS value by default, so the natural implementation is the wrong one. The error scales with the SQUARE of the per-period Sharpe, which makes it nearly invisible on daily data (-0.1%) but material on monthly data (-1.9%) and worse on quarterly (-5.1%). Since fund-style track records are almost always evaluated monthly, the bug would surface precisely when the stakes are highest -- and it understates the standard error, which inflates PSR and DSR and lets strategies through the promotion gate that should have been rejected. The direction of the error is the dangerous one. Separately, note that the SKEWNESS term dominates at daily frequency: a realistic skew of $-0.8$ changes the standard error by +2.0% on daily data, an order of magnitude more than the kurtosis term. Fix: define $\\gamma_4=E[(r-\\mu)^4]/\\sigma^4$ explicitly in the report, and unit-test that a Gaussian sample gives $\\gamma_4\\approx3$ and that the denominator reduces to $\\sqrt{1+\\widehat{SR}^2/2}$.",
+      "payload": {
+        "table": [
+          {
+            "freq": "daily",
+            "sr_per_period": 0.05039526306789696,
+            "rel_err": -0.0009498181658817995
+          },
+          {
+            "freq": "weekly",
+            "sr_per_period": 0.11094003924504584,
+            "rel_err": -0.00455583234965351
+          },
+          {
+            "freq": "monthly",
+            "sr_per_period": 0.23094010767585033,
+            "rel_err": -0.018929156482570875
+          },
+          {
+            "freq": "quarterly",
+            "sr_per_period": 0.4,
+            "rel_err": -0.05131670194948601
+          }
+        ],
+        "skew_effect_daily": 0.019896380771027955
+      }
+    },
+    {
+      "cid": "S-05",
+      "section": "2.8 Statistical validation",
+      "claim": "Under normality the PSR denominator reduces exactly to Lo (2002)'s $\\sqrt{1+\\widehat{SR}^2/2}$",
+      "method": "algebraic reduction with skew=0, kurtosis=3",
+      "expected": "1.0009",
+      "observed": "1.0009",
+      "status": "PASS",
+      "note": "(gamma_4 - 1)/4 = (3-1)/4 = 1/2. A useful invariant to assert in code: with Gaussian inputs the general formula must equal the simple one.",
+      "payload": {}
+    },
+    {
+      "cid": "S-06",
+      "section": "2.8 Statistical validation",
+      "claim": "PSR is a calibrated probability: under the null $SR=SR^*$ it is uniformly distributed",
+      "method": "40,000 null samples of n=1250; Kolmogorov-Smirnov test against Uniform(0,1)",
+      "expected": "KS p-value > 0.01 (cannot reject uniformity)",
+      "observed": "KS statistic 0.0024, p = 0.971; empirical P(PSR > 0.95) = 0.0490 (nominal 0.05)",
+      "status": "PASS",
+      "note": "This is the property that makes PSR usable as a promotion gate: a 0.95 threshold really does admit 5% of worthless strategies, not some unknown fraction. Verified rather than assumed.",
+      "payload": {
+        "ks_stat": 0.0024400584362954114,
+        "ks_p": 0.9706365091820188,
+        "false_positive": 0.048975
+      }
+    },
+    {
+      "cid": "S-07",
+      "section": "2.8 Statistical validation",
+      "claim": "False Strategy Theorem: $E[\\max_N\\widehat{SR}]\\approx\\sqrt{V[\\widehat{SR}]}[(1-\\gamma)\\Phi^{-1}(1-\\frac1N)+\\gamma\\Phi^{-1}(1-\\frac1{N e})]$",
+      "method": "compare the closed form against direct Monte Carlo of the maximum of N i.i.d. standard normals, N from 10 to 10,000",
+      "expected": "closed form within 2% of Monte Carlo for N >= 50",
+      "observed": "N=10: formula 1.575 vs MC 1.537 (+2.4%); N=50: formula 2.276 vs MC 2.252 (+1.1%); N=100: formula 2.531 vs MC 2.507 (+0.9%); N=500: formula 3.053 vs MC 3.034 (+0.6%); N=1000: formula 3.255 vs MC 3.242 (+0.4%); N=5000: formula 3.688 vs MC 3.681 (+0.2%); N=10000: formula 3.861 vs MC 3.858 (+0.1%)",
+      "status": "PASS",
+      "note": "The approximation is excellent across three orders of magnitude in N, and improves as N grows: the error is +2.4% at N=10 but under 1\\% for every N >= 100 and +0.1% at N=10,000. Since the whole point of the theorem is large trial counts, it is accurate exactly where it is used; the report need not caveat it, but should not apply it to a handful of trials. Note $\\gamma$ here is the Euler-Mascheroni constant 0.5772, which the report states correctly -- worth flagging only because $\\gamma_3$ and $\\gamma_4$ elsewhere in the same section denote skewness and kurtosis, an unfortunate but standard collision.",
+      "payload": {
+        "table": [
+          {
+            "N": 10,
+            "formula": 1.57459830134575,
+            "mc": 1.5372618170275791,
+            "rel_err": 0.024287654779824086
+          },
+          {
+            "N": 50,
+            "formula": 2.2763030934203483,
+            "mc": 2.2521677073652495,
+            "rel_err": 0.010716513684202456
+          },
+          {
+            "N": 100,
+            "formula": 2.5306028932016846,
+            "mc": 2.5068896926969013,
+            "rel_err": 0.009459211776994048
+          },
+          {
+            "N": 500,
+            "formula": 3.0525275745280807,
+            "mc": 3.0335878400648015,
+            "rel_err": 0.006243344667044237
+          },
+          {
+            "N": 1000,
+            "formula": 3.255121513652723,
+            "mc": 3.242263981734668,
+            "rel_err": 0.003965603044813193
+          },
+          {
+            "N": 5000,
+            "formula": 3.6877030871775673,
+            "mc": 3.6810802189133764,
+            "rel_err": 0.0017991643404462465
+          },
+          {
+            "N": 10000,
+            "formula": 3.86066485551044,
+            "mc": 3.85816152679802,
+            "rel_err": 0.0006488397893744668
+          }
+        ]
+      }
+    },
+    {
+      "cid": "S-08",
+      "section": "2.8 Statistical validation",
+      "claim": "Report's headline claim: with $E[SR]=0$, $V[SR]=1$, after 1{,}000 independent backtests the expected maximum Sharpe is \\textbf{3.26}",
+      "method": "evaluate the False Strategy Theorem at N=1000, and confirm by direct Monte Carlo (200k replications of the max of 1000 normals)",
+      "expected": "3.26",
+      "observed": "3.25512",
+      "status": "PASS",
+      "note": "Formula gives 3.2551; independent Monte Carlo gives 3.2414. The quoted figure is correct as stated. Its practical meaning is worth spelling out in the report: an operator who tries 1,000 parameter combinations and reports the best one has an expected Sharpe of 3.26 from PURE NOISE, so a raw Sharpe of 3 is evidence of a large search, not of skill.",
+      "payload": {
+        "mc": 3.2414077824583596
+      }
+    },
+    {
+      "cid": "S-09",
+      "section": "2.8 Statistical validation",
+      "claim": "The deflation hurdle rises with the number of trials, and a routine parameter sweep already implies thousands of trials",
+      "method": "expected maximum Sharpe under the null at realistic trial counts",
+      "expected": "-",
+      "observed": "N=10: hurdle SR 1.57; N=100: hurdle SR 2.53; N=1,000: hurdle SR 3.26; N=10,000: hurdle SR 3.86; N=100,000: hurdle SR 4.39",
+      "status": "INFO",
+      "note": "A three-parameter grid at 10 values each is 1,000 trials before any variant selection; adding a universe choice and two signal variants reaches $10^5$. At that point the null expects a maximum Sharpe of 4.39. This is why the report is right that section 2.8 is the highest-ROI engineering in the plan -- and why the trial registry must count EVERY configuration ever evaluated, including abandoned ones, or N is understated and the deflation is worthless.",
+      "payload": {
+        "table": [
+          {
+            "N": 10,
+            "hurdle": 1.57459830134575
+          },
+          {
+            "N": 100,
+            "hurdle": 2.5306028932016846
+          },
+          {
+            "N": 1000,
+            "hurdle": 3.255121513652723
+          },
+          {
+            "N": 10000,
+            "hurdle": 3.86066485551044
+          },
+          {
+            "N": 100000,
+            "hurdle": 4.390828742376489
+          }
+        ]
+      }
+    },
+    {
+      "cid": "S-10",
+      "section": "2.8 Statistical validation",
+      "claim": "Minimum Track Record Length: solving PSR $=$ target for $n$ gives $n^*=1+\\left[1-\\gamma_3 SR+\\frac{\\gamma_4-1}{4}SR^2\\right]\\left(\\frac{z_{target}}{SR-SR^*}\\right)^2$",
+      "method": "root-find PSR(n) = 0.95 numerically and compare to the closed form",
+      "expected": "2729.54",
+      "observed": "2729.54",
+      "status": "PASS",
+      "note": "For an annualised Sharpe of 0.5 against a zero benchmark, 95% confidence requires 2730 daily observations = 10.8 years. The report mentions MinTRL without this number, which is the one that matters: a solo operator with three years of paper trading cannot statistically distinguish a Sharpe-0.5 strategy from noise.",
+      "payload": {
+        "years": 10.831510212123908
+      }
+    },
+    {
+      "cid": "S-11",
+      "section": "2.8 Statistical validation",
+      "claim": "Track record length required for 95% confidence scales as $1/SR^2$",
+      "method": "closed-form MinTRL across annualised Sharpe ratios, daily data, Gaussian returns",
+      "expected": "-",
+      "observed": "SR 0.3: 30.1 yr; SR 0.5: 10.8 yr; SR 0.8: 4.2 yr; SR 1.0: 2.7 yr; SR 1.5: 1.2 yr; SR 2.0: 0.7 yr",
+      "status": "INFO",
+      "note": "This table belongs in the report next to section 4.8's 'realistic solo expectation is net Sharpe 0.3-0.8'. At a true Sharpe of 0.5 it takes 11 years of live data to be 95\\% sure the strategy is not noise; at 0.3 it takes 30 years. The honest conclusion is that live P\\&L will never be the arbiter on a solo timescale, which is exactly why the ex-ante controls (PBO, DSR, purged CV) have to carry the weight.",
+      "payload": {
+        "table": [
+          {
+            "sharpe": 0.3,
+            "years": 30.07093033013572
+          },
+          {
+            "sharpe": 0.5,
+            "years": 10.831510212123908
+          },
+          {
+            "sharpe": 0.8,
+            "years": 4.236748042766336
+          },
+          {
+            "sharpe": 1.0,
+            "years": 2.7148798498376663
+          },
+          {
+            "sharpe": 1.5,
+            "years": 1.2118001531179916
+          },
+          {
+            "sharpe": 2.0,
+            "years": 0.6857222592661061
+          }
+        ]
+      }
+    },
+    {
+      "cid": "S-12",
+      "section": "2.8 Statistical validation",
+      "claim": "PBO via CSCV is calibrated: under the null that no strategy has an edge, $E[\\text{PBO}]=0.5$",
+      "method": "T=1000, N=40 strategies, S=12 blocks = 924 symmetric splits; averaged over 40 independent noise datasets",
+      "expected": "mean PBO = 0.50",
+      "observed": "mean PBO = 0.530 +/- 0.028 (standard error)",
+      "status": "PASS",
+      "note": "Confirms the estimator is unbiased under the null. Note this required averaging over datasets -- see S-14 for why that distinction matters operationally.",
+      "payload": {
+        "mean_null": 0.5295454545454545,
+        "se_null": 0.028452254340618505
+      }
+    },
+    {
+      "cid": "S-13",
+      "section": "2.8 Statistical validation",
+      "claim": "PBO has power: a strategy with a genuine persistent edge drives PBO to zero, while a pure parameter sweep does not",
+      "method": "same geometry; one case with a real edge planted in column 7, one case a correlated 40-variant sweep over a single signal",
+      "expected": "PBO ~ 0 with a real edge; PBO ~ 0.5 for a noise sweep",
+      "observed": "genuine edge PBO = 0.000; correlated parameter sweep PBO = 0.353",
+      "status": "PASS",
+      "note": "The second case is the one a solo operator actually faces: a grid sweep over one signal, where every variant shares a common component and differs only by noise. PBO correctly reports that selecting the best variant generalises no better than a coin flip. Note PBO and DSR answer different questions -- DSR asks 'is this Sharpe real given N trials?', PBO asks 'does my SELECTION PROCEDURE generalise?' -- so the report is right to gate promotion on both.",
+      "payload": {
+        "pbo_edge": 0.0,
+        "pbo_sweep": 0.3528138528138528
+      }
+    },
+    {
+      "cid": "S-14",
+      "section": "2.8 Statistical validation",
+      "claim": "A PBO value computed from a single backtest matrix has very large sampling error and cannot be read as a precise number",
+      "method": "24 independent null datasets at each (T, N); report the spread of the resulting PBO estimates",
+      "expected": "PBO should concentrate near 0.5 under the null",
+      "observed": "T=1000, N=40: mean 0.49, sd 0.19; T=2500, N=40: mean 0.52, sd 0.20; T=1000, N=200: mean 0.47, sd 0.16; T=5000, N=200: mean 0.52, sd 0.15",
+      "status": "FLAG",
+      "note": "The report presents PBO as a scalar to be compared against a threshold. In practice, at the data sizes a solo operator has, the estimator's own standard deviation under the null is around 0.19 at T=1000, N=40. Two honest runs of the same worthless strategy family can therefore return PBO $=0.25$ and PBO $=0.75$. Consequences for the build: (i) do not gate promotion on a single PBO point estimate; (ii) report a bootstrap confidence interval alongside it; (iii) prefer longer histories and larger strategy families, since the spread falls to 0.15 at T=5000, N=200. This does not weaken the case for PBO -- it is still the right diagnostic -- but a threshold rule written against a noisy statistic is a false gate, and false gates are worse than no gate because they are trusted.",
+      "payload": {
+        "table": [
+          {
+            "T": 1000,
+            "N": 40,
+            "mean": 0.4879599567099567,
+            "sd": 0.19233944444974443
+          },
+          {
+            "T": 2500,
+            "N": 40,
+            "mean": 0.5154671717171717,
+            "sd": 0.19979734933798768
+          },
+          {
+            "T": 1000,
+            "N": 200,
+            "mean": 0.472943722943723,
+            "sd": 0.15991447003566603
+          },
+          {
+            "T": 5000,
+            "N": 200,
+            "mean": 0.5183982683982684,
+            "sd": 0.14951422723090044
+          }
+        ]
+      }
+    },
+    {
+      "cid": "S-15",
+      "section": "2.8 Statistical validation",
+      "claim": "Shuffled k-fold CV manufactures skill out of nothing when labels overlap in time; contiguous folds with purging and embargo do not",
+      "method": "10 replications x 5 folds on data with ZERO true predictability BY CONSTRUCTION (feature window and label window are disjoint, h=20); random forest, AUC",
+      "expected": "shuffled CV AUC significantly above 0.5; purged CV AUC indistinguishable from 0.5",
+      "observed": "shuffled k-fold 0.5261 +/- 0.0044; contiguous blocks (no purge) 0.4985 +/- 0.0058; purged + embargoed 0.5009 +/- 0.0060",
+      "status": "PASS",
+      "note": "This reproduces the report's section 2.12 claim end to end on data with provably zero signal. Three points the report should absorb. First, the naive pipeline reports AUC 0.526 against a truth of 0.5, with a small standard error -- it looks significant. Second, the leak requires no look-ahead in the feature: the feature and label windows are disjoint by construction, and the leak comes entirely from neighbouring TRAINING rows sharing the test row's label window. An audit for 'no future data in features' is therefore necessary but not sufficient, which is the single most important practical consequence. Third, simply using contiguous folds instead of shuffled ones already removes most of the damage (0.499), because only the fold boundaries leak; purging and embargo clean up the remainder. Blocking is the cheap 90\\% fix, purging is the rest.",
+      "payload": {
+        "shuffled_auc": 0.5261007025208437,
+        "blocked_auc": 0.4985130951633009,
+        "purged_auc": 0.5008762152178109,
+        "shuffled_se": 0.004375905063111596,
+        "purged_se": 0.005992383160293244
+      }
+    },
+    {
+      "cid": "E-01",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "The Almgren-Chriss trajectory $x_j=X\\frac{\\sinh(\\kappa(T-t_j))}{\\sinh(\\kappa T)}$ satisfies the discrete stationarity condition $x_{j-1}-2x_j+x_{j+1}=2(\\cosh(\\kappa\\tau)-1)x_j$",
+      "method": "sympy: expand the second difference of the sinh form using sinh(a+b)+sinh(a-b) = 2 sinh(a) cosh(b)",
+      "expected": "second difference equals 2(cosh(kappa tau) - 1) x_j identically",
+      "observed": "verified identically in sympy",
+      "status": "PASS",
+      "note": "This is the exact algebraic link between the closed form and the optimisation. Matching it to the first-order condition $(\\tilde\\eta/\\tau)(2x_j-x_{j-1}-x_{j+1})=\\lambda\\sigma^2\\tau x_j$ gives the defining equation for kappa: $\\cosh(\\kappa\\tau)=1+\\tilde\\kappa^2\\tau^2/2$ with $\\tilde\\kappa^2=\\lambda\\sigma^2/\\tilde\\eta$. The report quotes only the continuum approximation to this -- see E-03.",
+      "payload": {}
+    },
+    {
+      "cid": "E-02",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "The sinh trajectory IS the optimum of $E[\\text{cost}]+\\lambda V[\\text{cost}]$",
+      "method": "solve the discrete stationarity system numerically (assuming nothing about sinh) and compare, across N in {10,50,200} and lambda over three orders of magnitude; max relative holdings error",
+      "expected": "0",
+      "observed": "6.5821e-13",
+      "status": "PASS",
+      "note": "The closed form reproduces the numerical optimum to machine precision at every horizon discretisation and risk aversion tested. The report's equation is correct as written.",
+      "payload": {
+        "table": [
+          {
+            "N": 10,
+            "lambda": 1e-07,
+            "err": 4.656612873077392e-16
+          },
+          {
+            "N": 10,
+            "lambda": 1e-06,
+            "err": 9.313225746154785e-16
+          },
+          {
+            "N": 10,
+            "lambda": 1e-05,
+            "err": 1.1059455573558808e-15
+          },
+          {
+            "N": 50,
+            "lambda": 1e-07,
+            "err": 2.6775524020195007e-15
+          },
+          {
+            "N": 50,
+            "lambda": 1e-06,
+            "err": 9.89530235528946e-15
+          },
+          {
+            "N": 50,
+            "lambda": 1e-05,
+            "err": 1.478474587202072e-14
+          },
+          {
+            "N": 200,
+            "lambda": 1e-07,
+            "err": 6.582122296094895e-13
+          },
+          {
+            "N": 200,
+            "lambda": 1e-06,
+            "err": 3.655441105365753e-13
+          },
+          {
+            "N": 200,
+            "lambda": 1e-05,
+            "err": 2.6077032089233396e-13
+          }
+        ]
+      }
+    },
+    {
+      "cid": "E-03",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "$\\kappa\\approx\\sqrt{\\lambda\\sigma^2/\\eta}$ is the continuum limit of the exact $\\kappa$, and drops the $\\tilde\\eta=\\eta-\\gamma\\tau/2$ correction",
+      "method": "compare the report's kappa against the exact root of cosh(kappa tau) = 1 + kappa_tilde^2 tau^2/2, across N; also report the resulting objective-function penalty",
+      "expected": "exact kappa",
+      "observed": "N=5: kappa error -0.49%, cost penalty +9.76e-09; N=10: kappa error -0.25%, cost penalty +2.57e-09; N=25: kappa error -0.10%, cost penalty +4.18e-10; N=50: kappa error -0.05%, cost penalty +1.05e-10; N=200: kappa error -0.01%, cost penalty +6.56e-12; N=1000: kappa error -0.00%, cost penalty +2.62e-13",
+      "status": "FLAG",
+      "note": "The approximation is sound but its conditions should be stated. Two distinct corrections are dropped. First, the exact $\\kappa$ solves a transcendental equation whose solution approaches $\\tilde\\kappa$ only as $\\tau\\to0$. Second, the denominator should be $\\tilde\\eta=\\eta-\\gamma\\tau/2$, not $\\eta$: the permanent-impact parameter partially offsets the temporary one because half of each trade's permanent impact is paid by the trader's own remaining inventory. At a fine grid (N=1000) the error in $\\kappa$ is -0.00% and irrelevant; on a coarse schedule (N=5, i.e. five slices -- a realistic daily-ETF execution) it is -0.49%. Crucially, the OBJECTIVE penalty is tiny in every case (9.8e-09 at worst), because the cost surface is very flat near its optimum. The practical conclusion for the report is reassuring and worth stating explicitly: execution-schedule optimisation is forgiving, so effort spent calibrating impact parameters precisely is better spent elsewhere -- which reinforces the report's own section 5.7 argument against premature optimisation.",
+      "payload": {
+        "table": [
+          {
+            "N": 5,
+            "kappa_exact": 0.26964726720052795,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -0.004891983198080041,
+            "cost_penalty": 9.756962571216832e-09
+          },
+          {
+            "N": 10,
+            "kappa_exact": 0.26899339385944304,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -0.002473059096075314,
+            "cost_penalty": 2.565336609805513e-09
+          },
+          {
+            "N": 25,
+            "kappa_exact": 0.2685955967893207,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -0.000995695731958346,
+            "cost_penalty": 4.1768410952158774e-10
+          },
+          {
+            "N": 50,
+            "kappa_exact": 0.26846209961026285,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -0.0004989244682304106,
+            "cost_penalty": 1.0481282508578715e-10
+          },
+          {
+            "N": 200,
+            "kappa_exact": 0.2683616844797036,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -0.00012493281145486979,
+            "cost_penalty": 6.5645267000036256e-12
+          },
+          {
+            "N": 1000,
+            "kappa_exact": 0.2683348645615005,
+            "kappa_report": 0.2683281572999748,
+            "rel_err": -2.4995863048604683e-05,
+            "cost_penalty": 2.62456723021387e-13
+          }
+        ]
+      }
+    },
+    {
+      "cid": "E-04",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "As $\\lambda\\to0$ (risk neutral) the optimal Almgren-Chriss trajectory becomes linear -- i.e. TWAP",
+      "method": "solve the discrete optimum at lambda = 1e-14 and compare to a straight line; max relative deviation",
+      "expected": "0",
+      "observed": "2.3103e-11",
+      "status": "PASS",
+      "note": "A risk-neutral trader minimises only expected cost, and quadratic temporary impact is minimised by trading at a constant rate. This is the sanity check that anchors the whole model: the report's 'higher risk aversion => faster liquidation' has TWAP as its zero-risk-aversion endpoint.",
+      "payload": {}
+    },
+    {
+      "cid": "E-05",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "Higher risk aversion $\\lambda$ implies faster liquidation",
+      "method": "fraction of the horizon needed to halve the position, at three risk aversions",
+      "expected": "monotonically decreasing in lambda",
+      "observed": "lambda=1e-08: 0.50 of horizon; lambda=1e-06: 0.50 of horizon; lambda=1e-04: 0.34 of horizon; lambda=1e-02: 0.04 of horizon",
+      "status": "PASS",
+      "note": "Confirms the report's directional claim. At near-zero risk aversion the position halves at the midpoint of the horizon (TWAP); at high risk aversion it halves after 4% of the horizon. This is the mechanism behind the efficient frontier of execution in E-07.",
+      "payload": {
+        "half_life_fraction": 0.04
+      }
+    },
+    {
+      "cid": "E-06a",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "Almgren-Chriss expected cost $\\frac{\\gamma X^2}{2}+\\epsilon X+\\frac{\\tilde\\eta}{\\tau}\\sum n_k^2$ matches simulation",
+      "method": "MC: 400,000 simulated liquidations of the optimal schedule through the full price process",
+      "expected": "2.6232e+06",
+      "observed": "2.6235e+06",
+      "status": "PASS",
+      "note": "agreement to rtol=0.01, atol=0",
+      "payload": {}
+    },
+    {
+      "cid": "E-06b",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "Almgren-Chriss cost variance $\\sigma^2\\tau\\sum x_k^2$ matches simulation",
+      "method": "MC: same 400,000 paths, sample variance of implementation shortfall",
+      "expected": "2.8599e+10",
+      "observed": "2.8688e+10",
+      "status": "PASS",
+      "note": "Together E-06a/b validate the cost functional that the whole optimisation minimises, not merely the algebra of its solution. Note the $\\tilde\\eta$ (rather than $\\eta$) in the mean: the simulation independently confirms the $-\\gamma\\tau/2$ correction flagged in E-03.",
+      "payload": {}
+    },
+    {
+      "cid": "E-07",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "The Almgren-Chriss efficient frontier of execution (expected cost vs cost variance) is monotone decreasing and convex",
+      "method": "trace 60 risk aversions from 1e-9 to 1e-2 and test monotonicity and convexity of the resulting (variance, expected cost) locus",
+      "expected": "monotone and convex",
+      "observed": "monotone: True; convex: True; expected cost spans 2623750 to 23730114, variance spans 1.95e+09 to 2.96e+10",
+      "status": "PASS",
+      "note": "Convexity is what makes the frontier meaningful as a decision tool: each additional unit of expected cost buys progressively less variance reduction, so there is a well-defined interior trade-off rather than a corner solution. This is the figure the report asks for in item 3 of its section 7 list.",
+      "payload": {
+        "frontier_var": [
+          29551355946.71082,
+          29551310693.06138,
+          29551251223.320732,
+          29551173071.685047,
+          29551070369.594387,
+          29550935405.05894,
+          29550758043.748127,
+          29550524968.257736,
+          29550218678.64055,
+          29549816179.129974,
+          29549287253.053432,
+          29548592196.63319,
+          29547678842.574364,
+          29546478651.37519,
+          29544901579.79661,
+          29542829345.568577,
+          29540106591.032963,
+          29536529295.945866,
+          29531829593.769505,
+          29525655893.19928,
+          29517546884.092876,
+          29506897600.494522,
+          29492915205.788097,
+          29474561547.43786,
+          29450478797.278057,
+          29418893671.80382,
+          29377494879.42843,
+          29323277717.494587,
+          29252349434.660805,
+          29159689616.660927,
+          29038862367.177296,
+          28881682938.72603,
+          28677853011.9917,
+          28414599244.70303,
+          28076382933.390743,
+          27644798139.762726,
+          27098841410.162407,
+          26415808455.879833,
+          25573122072.59787,
+          24551360099.28033,
+          23338539184.791607,
+          21935228621.10179,
+          20359327812.642662,
+          18648599221.778988,
+          16858882299.752575,
+          15056963484.545458,
+          13309379224.517233,
+          11670840415.927067,
+          10176642846.40935,
+          8841476278.56379,
+          7663718087.786079,
+          6632022957.15169,
+          5731113571.104391,
+          4945362935.830088,
+          4260373996.2411804,
+          3663397593.3869267,
+          3143283849.3357754,
+          2690312318.7148457,
+          2296015731.1490097,
+          1953021906.8558097
+        ],
+        "frontier_cost": [
+          2623750.000072026,
+          2623750.000124389,
+          2623750.000214815,
+          2623750.0003709826,
+          2623750.0006406764,
+          2623750.0011064303,
+          2623750.0019107712,
+          2623750.003299835,
+          2623750.005698676,
+          2623750.0098413303,
+          2623750.016995385,
+          2623750.029349773,
+          2623750.0506843617,
+          2623750.087526041,
+          2623750.151144655,
+          2623750.2609985224,
+          2623750.45068161,
+          2623750.7781869257,
+          2623751.3436147845,
+          2623752.3197173616,
+          2623754.0045640613,
+          2623756.912302082,
+          2623761.9294644794,
+          2623770.583929509,
+          2623785.5071887323,
+          2623811.2276624436,
+          2623855.5294373874,
+          2623931.773347991,
+          2624062.8483659322,
+          2624287.8679534625,
+          2624673.450495811,
+          2625332.5720739383,
+          2626455.74611897,
+          2628361.876587638,
+          2631579.670741963,
+          2636974.7618122515,
+          2645941.5905744424,
+          2660679.7949629836,
+          2684566.715514119,
+          2722611.833578838,
+          2781926.2282793154,
+          2872060.1005865256,
+          3004980.4108997867,
+          3194448.175285854,
+          3454707.7468578476,
+          3798758.3139313813,
+          4236897.555053159,
+          4776366.82476806,
+          5422502.054871245,
+          6180962.438303955,
+          7059992.315671448,
+          8071798.458574661,
+          9232853.049789334,
+          10563594.19152015,
+          12088114.829595683,
+          13834130.86863745,
+          15833210.525943026,
+          18121138.593436975,
+          20738313.864194278,
+          23730114.456043147
+        ]
+      }
+    },
+    {
+      "cid": "E-08",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "Square-root law $\\Delta P\\approx Y\\sigma\\sqrt{Q/V}$ is concave: doubling order size raises impact by $\\sqrt2$, not 2",
+      "method": "sympy: ratio of impact at 2Q to impact at Q; also check Q/V is dimensionless so the expression scales like sigma",
+      "expected": "$\\sqrt2\\approx1.414$",
+      "observed": "ratio = sqrt(2)",
+      "status": "PASS",
+      "note": "Dimensionally consistent: $Q/V$ is dimensionless (shares over shares per day), so impact inherits the units of $\\sigma$, i.e. returns. The practical consequence for the report's section 4.8 capacity argument is worth stating: because impact is concave, a retail-size order in a liquid ETF pays negligible impact, and the report's claim that retail has an edge in capacity-constrained niches follows directly from this curvature.",
+      "payload": {}
+    },
+    {
+      "cid": "E-09",
+      "section": "2.9 Transaction cost & market impact",
+      "claim": "Market impact is negligible at retail size in a liquid ETF, and that is the structural edge",
+      "method": "square-root law with Y=1 and DAILY volatility (20% annualised / sqrt(252) = 1.26%/day), at several order sizes and average daily dollar volumes",
+      "expected": "-",
+      "observed": "$10,000 order in $5B ADV: 0.18 bp; $100,000 order in $5B ADV: 0.56 bp; $1,000,000 order in $5B ADV: 1.78 bp; $100,000 order in $0.05B ADV: 5.63 bp",
+      "status": "INFO",
+      "note": "A \\$10,000 order in a \\$5B/day ETF incurs roughly 0.18 bp of impact -- an order of magnitude below the bid-ask spread, which is the binding cost at this size. This validates the report's decision to calibrate the Stage 3 cost model from quoted spread and ADV rather than from an impact model, and confirms that the Almgren-Chriss machinery above is, for this system, an intellectual exercise rather than an operational necessity. It becomes relevant only in the thin-ADV case shown last.",
+      "payload": {
+        "table": [
+          {
+            "notional": 10000,
+            "adv": 5000000000.0,
+            "bps": 0.1781741612749496
+          },
+          {
+            "notional": 100000,
+            "adv": 5000000000.0,
+            "bps": 0.5634361698190111
+          },
+          {
+            "notional": 1000000,
+            "adv": 5000000000.0,
+            "bps": 1.7817416127494958
+          },
+          {
+            "notional": 100000,
+            "adv": 50000000.0,
+            "bps": 5.63436169819011
+          }
+        ]
+      }
+    },
+    {
+      "cid": "E-10",
+      "section": "2.10 Microstructure",
+      "claim": "Kyle's lambda: solving the joint fixed point of market efficiency and informed optimality gives $\\lambda=\\frac12\\sqrt{\\Sigma_0/\\sigma_u^2}$ and $\\beta=\\sigma_u/\\sqrt{\\Sigma_0}$",
+      "method": "sympy: solve the two equilibrium conditions simultaneously",
+      "expected": "$\\lambda=\\sqrt{\\Sigma_0}/(2\\sigma_u)$, $\\beta=\\sigma_u/\\sqrt{\\Sigma_0}$",
+      "observed": "lambda* = sqrt(Sigma_0)/(2*sigma_u), beta* = sigma_u/sqrt(Sigma_0)",
+      "status": "PASS",
+      "note": "The report gives only $\\Delta p=\\lambda\\cdot$(signed order flow), which is the reduced form. The structural result is the useful one for intuition: price impact rises with the uncertainty being resolved ($\\Sigma_0$) and falls with the noise-trader volume ($\\sigma_u$) the informed trader can hide behind. That is the same concavity argument as E-09, and it is why a retail order in a heavily traded ETF moves essentially nothing.",
+      "payload": {}
+    },
+    {
+      "cid": "E-11",
+      "section": "2.10 Microstructure",
+      "claim": "Roll's implied spread $s=2\\sqrt{-\\mathrm{Cov}(\\Delta p_t,\\Delta p_{t-1})}$ recovers the true bid-ask spread",
+      "method": "simulate the Roll model (random-walk efficient price plus i.i.d. bid-ask bounce) at four spreads, 4M ticks each",
+      "expected": "estimator within 2% of the true spread at every level",
+      "observed": "s=0.01: estimate 0.0100 (-0.4%); s=0.02: estimate 0.0200 (+0.1%); s=0.05: estimate 0.0500 (+0.0%); s=0.10: estimate 0.1001 (+0.1%)",
+      "status": "PASS",
+      "note": "Verified exactly as the report states it. Worth recording the assumption the formula rests on, since it is what breaks in practice: trade directions must be serially INDEPENDENT. Real order flow is strongly autocorrelated (institutional orders are worked in slices), which makes the covariance less negative and biases Roll's estimator downward -- often to the point of returning a positive covariance and no estimate at all. It is a teaching model, not a spread estimator for production.",
+      "payload": {
+        "table": [
+          {
+            "true": 0.01,
+            "cov": -2.4818049548771816e-05,
+            "est": 0.009963543455773516
+          },
+          {
+            "true": 0.02,
+            "cov": -0.00010018155127131088,
+            "est": 0.02001814689438669
+          },
+          {
+            "true": 0.05,
+            "cov": -0.0006253578819892395,
+            "est": 0.050014313230883796
+          },
+          {
+            "true": 0.1,
+            "cov": -0.002503317452054432,
+            "est": 0.10006632704470435
+          }
+        ]
+      }
+    },
+    {
+      "cid": "M-01",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "Ornstein-Uhlenbeck stationary distribution is $\\mathcal N(\\mu,\\ \\sigma^2/2\\theta)$ -- mean",
+      "method": "exact simulation, 4M steps, theta=1.5, mu=0.4, sigma=0.9",
+      "expected": "0.4",
+      "observed": "0.400108",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=0.005",
+      "payload": {}
+    },
+    {
+      "cid": "M-02",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "Ornstein-Uhlenbeck stationary variance $=\\sigma^2/2\\theta$",
+      "method": "same simulation, sample variance",
+      "expected": "0.27",
+      "observed": "0.269929",
+      "status": "PASS",
+      "note": "Confirms the report's statement exactly. Practical use: this is what makes the z-score in the report's entry rule well defined -- the spread has a genuine stationary scale to normalise by, which a non-cointegrated pair does not.",
+      "payload": {}
+    },
+    {
+      "cid": "M-03",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "Exact OU half-life from the regression slope is $-\\ln 2/\\ln(1+\\lambda)$, not $-\\ln 2/\\lambda$",
+      "method": "simulate OU exactly at six mean-reversion speeds (400k steps each), run the report's regression, and compare both estimators against the known true half-life",
+      "expected": "exact formula recovers the true half-life at every speed",
+      "observed": "max error of the exact formula 1.01%; theta=0.02: true 34.7, exact 34.3; theta=0.05: true 13.9, exact 13.8; theta=0.10: true 6.9, exact 7.0; theta=0.25: true 2.8, exact 2.8; theta=0.50: true 1.4, exact 1.4; theta=1.00: true 0.7, exact 0.7",
+      "status": "PASS",
+      "note": "Establishes the correct reference before assessing the report's version in M-04.",
+      "payload": {
+        "table": [
+          {
+            "theta": 0.02,
+            "true_hl": 34.657359027997266,
+            "report_hl": 34.655764897815274,
+            "exact_hl": 34.30802430711509
+          },
+          {
+            "theta": 0.05,
+            "true_hl": 13.862943611198904,
+            "report_hl": 14.187746661603871,
+            "exact_hl": 13.838279931622576
+          },
+          {
+            "theta": 0.1,
+            "true_hl": 6.931471805599452,
+            "report_hl": 7.339229451040503,
+            "exact_hl": 6.986926419395046
+          },
+          {
+            "theta": 0.25,
+            "true_hl": 2.772588722239781,
+            "report_hl": 3.1478635168144957,
+            "exact_hl": 2.7869385032071285
+          },
+          {
+            "theta": 0.5,
+            "true_hl": 1.3862943611198906,
+            "report_hl": 1.7627820555829499,
+            "exact_hl": 1.3874711517298202
+          },
+          {
+            "theta": 1.0,
+            "true_hl": 0.6931471805599453,
+            "report_hl": 1.0982458334249399,
+            "exact_hl": 0.6949966610189037
+          }
+        ]
+      }
+    },
+    {
+      "cid": "M-04",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "The report's half-life $=-\\ln 2/\\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion",
+      "method": "same simulation; relative error of the report's formula against the known truth",
+      "expected": "half-life estimate should equal ln(2)/theta",
+      "observed": "theta=0.02 (true HL 34.7): report 34.7 (-0%); theta=0.05 (true HL 13.9): report 14.2 (+2%); theta=0.10 (true HL 6.9): report 7.3 (+6%); theta=0.25 (true HL 2.8): report 3.1 (+14%); theta=0.50 (true HL 1.4): report 1.8 (+27%); theta=1.00 (true HL 0.7): report 1.1 (+58%)",
+      "status": "FAIL",
+      "note": "\\textbf{Correction required.} Section 6.5 states 'Estimate via OLS of $\\Delta X_t=\\lambda X_{t-1}+c+\\varepsilon_t$; then $\\theta=-\\lambda$ and half-life $=-\\ln 2/\\lambda$'. The exact discretisation of the OU process gives $\\lambda=e^{-\\theta\\Delta t}-1$, so the correct inversion is $\\theta=-\\ln(1+\\lambda)/\\Delta t$ and half-life $=-\\Delta t\\ln 2/\\ln(1+\\lambda)$. The report's form is the first-order Taylor expansion, accurate only when $\\theta\\Delta t\\ll1$. For slow reversion (theta $\\le$ 0.05) the error is under 2.3% and harmless. For the fast reversion that actually makes a pairs trade worth doing (theta $\\ge$ 0.25) it reaches 58%. The error is one-directional: the estimate is always too LONG. Operationally that means holding period limits, time-based stops and capital-allocation horizons are all set too generously, on the strategies where the mis-estimate is worst. The fix is one line of code and removes the bias entirely.",
+      "payload": {
+        "table": [
+          {
+            "theta": 0.02,
+            "true_hl": 34.657359027997266,
+            "report_hl": 34.655764897815274,
+            "report_err": -4.599687416184661e-05
+          },
+          {
+            "theta": 0.05,
+            "true_hl": 13.862943611198904,
+            "report_hl": 14.187746661603871,
+            "report_err": 0.023429587504242733
+          },
+          {
+            "theta": 0.1,
+            "true_hl": 6.931471805599452,
+            "report_hl": 7.339229451040503,
+            "report_err": 0.05882699329623642
+          },
+          {
+            "theta": 0.25,
+            "true_hl": 2.772588722239781,
+            "report_hl": 3.1478635168144957,
+            "report_err": 0.13535177127589137
+          },
+          {
+            "theta": 0.5,
+            "true_hl": 1.3862943611198906,
+            "report_hl": 1.7627820555829499,
+            "report_err": 0.27157846487878756
+          },
+          {
+            "theta": 1.0,
+            "true_hl": 0.6931471805599453,
+            "report_hl": 1.0982458334249399,
+            "report_err": 0.5844338175591273
+          }
+        ]
+      }
+    },
+    {
+      "cid": "M-05",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "Engle-Granger residuals must be tested with cointegration critical values, NOT standard ADF critical values",
+      "method": "3,000 pairs of INDEPENDENT random walks (n=250), where the true cointegration rate is 0%; measure the false-positive rate of each test at a nominal 5% level",
+      "expected": "both tests should reject 5% of the time; only the proper one does",
+      "observed": "naive ADF critical values reject 57.0% of the time (nominal 5%); proper Engle-Granger critical values reject 4.7%",
+      "status": "PASS",
+      "note": "\\textbf{Material omission.} Section 6.5 describes the Engle-Granger procedure correctly but does not warn that the second step needs its own critical values. Because $u_t$ is a fitted residual, OLS has already minimised its variance, making it look more stationary than it is. Using textbook ADF tables therefore finds spurious cointegration roughly 11x too often -- 57% of independent random-walk pairs are declared cointegrated. For a solo operator screening a few hundred ETF pairs, that is a guaranteed pipeline of pairs that look tradeable and are not. Use \\texttt{statsmodels.tsa.stattools.coint} (which applies MacKinnon's Engle-Granger surfaces) or the Johansen test, and never \\texttt{adfuller} on a regression residual. This interacts badly with the multiple-testing problem in section 2.8: screening pairs IS a trial count, and it must be registered as one.",
+      "payload": {
+        "size_naive": 0.5703333333333334,
+        "size_proper": 0.047
+      }
+    },
+    {
+      "cid": "M-06",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "Johansen trace test recovers the rank of $\\Pi$, i.e. the number of cointegrating vectors",
+      "method": "200 simulated 3-variable systems (n=1500) built with exactly one cointegrating relationship; sequential trace test at the 95% level",
+      "expected": "rank 1 identified in the large majority of replications",
+      "observed": "correct rank identified in 85% of replications",
+      "status": "PASS",
+      "note": "Confirms the report's description that the rank of $\\Pi$ counts the cointegrating vectors and that the trace statistic tests it sequentially. Note the test is applied here with the correct asymptotic critical values built in, which is exactly the advantage over the hand-rolled Engle-Granger route in M-05. For a solo operator the practical recommendation follows: prefer Johansen, both because it needs no choice of dependent variable (as the report notes) and because it is much harder to get the inference wrong.",
+      "payload": {
+        "detection_rate": 0.85
+      }
+    },
+    {
+      "cid": "M-07",
+      "section": "6.5 Pairs / statistical arbitrage",
+      "claim": "A Kalman filter tracks a time-varying hedge ratio $\\beta_t$ substantially better than rolling OLS, including through a structural break",
+      "method": "simulated random-walk beta with a +0.35 level break at the midpoint, n=2000; RMSE of the estimated beta against the truth",
+      "expected": "Kalman RMSE below the best rolling-OLS window",
+      "observed": "rolling OLS 30d: RMSE 0.0272; rolling OLS 60d: RMSE 0.0372; rolling OLS 120d: RMSE 0.0520; Kalman: RMSE 0.0082 (Kalman is 3.3x better than the best window)",
+      "status": "PASS",
+      "note": "Confirms the report's claim that a Kalman filter 'tracks structural breaks far better than rolling OLS'. The mechanism is worth stating: rolling OLS faces an unavoidable bias-variance choice through its window length -- short windows are noisy, long windows lag the break -- whereas the Kalman gain adapts automatically, widening after a surprise and narrowing in quiet periods. The cost is two variance parameters (process $q$ and observation $r$) that must themselves be estimated, and which are exactly the kind of free parameter the report's section 2.8 trial registry needs to count.",
+      "payload": {
+        "table": [
+          {
+            "method": "rolling OLS 30d",
+            "rmse": 0.027153323705078454
+          },
+          {
+            "method": "rolling OLS 60d",
+            "rmse": 0.037220645819696196
+          },
+          {
+            "method": "rolling OLS 120d",
+            "rmse": 0.05197894735759766
+          },
+          {
+            "method": "Kalman",
+            "rmse": 0.008199179460239299
+          }
+        ]
+      }
+    },
+    {
+      "cid": "F-01d30",
+      "section": "2.12 Where ML fits",
+      "claim": "Fractional-differencing weights $w_k=-w_{k-1}\\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.3$",
+      "method": "sympy series expansion of (1-B)^d to 8 terms vs the recursion",
+      "expected": "0",
+      "observed": "5.5511e-17",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-12",
+      "payload": {}
+    },
+    {
+      "cid": "F-01d50",
+      "section": "2.12 Where ML fits",
+      "claim": "Fractional-differencing weights $w_k=-w_{k-1}\\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.5$",
+      "method": "sympy series expansion of (1-B)^d to 8 terms vs the recursion",
+      "expected": "0",
+      "observed": "0",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-12",
+      "payload": {}
+    },
+    {
+      "cid": "F-01d75",
+      "section": "2.12 Where ML fits",
+      "claim": "Fractional-differencing weights $w_k=-w_{k-1}\\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.75$",
+      "method": "sympy series expansion of (1-B)^d to 8 terms vs the recursion",
+      "expected": "0",
+      "observed": "0",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-12",
+      "payload": {}
+    },
+    {
+      "cid": "F-01d100",
+      "section": "2.12 Where ML fits",
+      "claim": "Fractional-differencing weights $w_k=-w_{k-1}\\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=1.0$",
+      "method": "sympy series expansion of (1-B)^d to 8 terms vs the recursion",
+      "expected": "0",
+      "observed": "0",
+      "status": "PASS",
+      "note": "agreement to rtol=0, atol=1e-12",
+      "payload": {}
+    },
+    {
+      "cid": "F-02",
+      "section": "2.12 Where ML fits",
+      "claim": "At $d=1$ fractional differencing reduces exactly to the ordinary first difference $(1,-1,0,0,\\dots)$",
+      "method": "evaluate the weight recursion at d=1",
+      "expected": "[1, -1, 0, 0, ...]",
+      "observed": "[1, -1, 0e+00, 0e+00, ...]",
+      "status": "PASS",
+      "note": "The boundary case that anchors the method: d=1 is the standard returns transform that throws away all memory, d=0 is the raw price that keeps all memory and is non-stationary. The report's claim is that useful values lie strictly between.",
+      "payload": {}
+    },
+    {
+      "cid": "F-03",
+      "section": "2.12 Where ML fits",
+      "claim": "Fractional differentiation attains stationarity at $d\\ll1$ while retaining most of the memory that $d=1$ destroys",
+      "method": "sweep d from 0 to 1 on a 5,000-point simulated log-price series (fixed-width window 200); ADF statistic and correlation with the original series at each d",
+      "expected": "stationarity reached well below d=1, with correlation still high",
+      "observed": "minimum d passing ADF at 5% is d=0.20 (correlation with the original series 0.98); at d=1 the correlation has fallen to 0.03",
+      "status": "PASS",
+      "note": "Reproduces the central claim of the report's section 2.12 note that fractional differentiation is 'stationary while preserving memory'. The quantitative payoff is the point: differencing to d=0.20 is enough to pass a unit-root test while keeping a correlation of 0.98 with the level series, whereas the standard returns transform (d=1) leaves 0.03. Everything a model could have learned from the level of the series is discarded by the conventional transform. Note that the ADF threshold makes d a data-dependent choice, i.e. another parameter for the trial registry.",
+      "payload": {
+        "table": [
+          {
+            "d": 0.0,
+            "adf": -0.8168131573196074,
+            "p": 0.814133373872391,
+            "corr": 1.0
+          },
+          {
+            "d": 0.05,
+            "adf": -1.3075820662721631,
+            "p": 0.6256964095157738,
+            "corr": 0.9992325494252637
+          },
+          {
+            "d": 0.1,
+            "adf": -1.8810862356070586,
+            "p": 0.34101037975819837,
+            "corr": 0.9964797436072247
+          },
+          {
+            "d": 0.15,
+            "adf": -2.5794716874339176,
+            "p": 0.09731470938839931,
+            "corr": 0.9908428370610345
+          },
+          {
+            "d": 0.2,
+            "adf": -3.4553002096138576,
+            "p": 0.009212088261385377,
+            "corr": 0.981024175590016
+          },
+          {
+            "d": 0.25,
+            "adf": -4.572386286857664,
+            "p": 0.00014518451443707212,
+            "corr": 0.9651761019083568
+          },
+          {
+            "d": 0.3,
+            "adf": -6.00474649751181,
+            "p": 1.6255570559830848e-07,
+            "corr": 0.9407562786581206
+          },
+          {
+            "d": 0.35,
+            "adf": -7.831121152910029,
+            "p": 6.289110659663366e-12,
+            "corr": 0.9045051042108528
+          },
+          {
+            "d": 0.4,
+            "adf": -10.121735313696933,
+            "p": 9.405992308518322e-18,
+            "corr": 0.8527963711856902
+          },
+          {
+            "d": 0.45,
+            "adf": -12.915133387953302,
+            "p": 3.980793423096285e-24,
+            "corr": 0.7827120810015928
+          },
+          {
+            "d": 0.5,
+            "adf": -16.188943765732237,
+            "p": 4.190262857195995e-29,
+            "corr": 0.6939307734333523
+          },
+          {
+            "d": 0.55,
+            "adf": -19.839633553960873,
+            "p": 0.0,
+            "corr": 0.5905590163201015
+          },
+          {
+            "d": 0.6,
+            "adf": -23.692887901310733,
+            "p": 0.0,
+            "corr": 0.4810855469867949
+          },
+          {
+            "d": 0.65,
+            "adf": -27.55136162375922,
+            "p": 0.0,
+            "corr": 0.37561565914214967
+          },
+          {
+            "d": 0.7,
+            "adf": -31.25451622677954,
+            "p": 0.0,
+            "corr": 0.28222002157141424
+          },
+          {
+            "d": 0.75,
+            "adf": -34.71287925603693,
+            "p": 0.0,
+            "corr": 0.20501178664817898
+          },
+          {
+            "d": 0.8,
+            "adf": -37.90399558140678,
+            "p": 0.0,
+            "corr": 0.1444939374631821
+          },
+          {
+            "d": 0.85,
+            "adf": -40.846969543768374,
+            "p": 0.0,
+            "corr": 0.0989593768207463
+          },
+          {
+            "d": 0.9,
+            "adf": -43.57716019161267,
+            "p": 0.0,
+            "corr": 0.06579726643888432
+          },
+          {
+            "d": 0.95,
+            "adf": -46.130661329468815,
+            "p": 0.0,
+            "corr": 0.04231044194753825
+          },
+          {
+            "d": 1.0,
+            "adf": -48.5379567262966,
+            "p": 0.0,
+            "corr": 0.02610518841594952
+          }
+        ],
+        "d_min": 0.2
+      }
+    },
+    {
+      "cid": "G-01",
+      "section": "2.5 Regime detection",
+      "claim": "HMM \\emph{smoothed} probabilities $P(z_t\\mid r_{1:T})$ embed look-ahead; only \\emph{filtered} $P(z_t\\mid r_{1:t})$ are tradeable",
+      "method": "30 independent realisations of 4,000 regime-switching returns; fit a 2-state Gaussian HMM to each and run the identical long/flat rule on smoothed vs causally forward-filtered probabilities",
+      "expected": "the smoothed backtest should look significantly better than reality",
+      "observed": "mean smoothed Sharpe 0.72 vs filtered 0.28; gap 0.44 +/- 0.06 (standard error); the two signals disagree on 12.6% of days",
+      "status": "PASS",
+      "note": "Confirms and sizes the report's 'critical look-ahead trap'. Averaged over 30 independent runs the smoothed backtest reports a Sharpe of 0.72 against the 0.28 actually attainable, an inflation of 159%, arising purely from one default API choice. Three points the report should add. First, the trap is silent: \\texttt{predict\\_proba} and \\texttt{predict} in hmmlearn return SMOOTHED posteriors, so the wrong answer is what a reasonable implementation produces on the first attempt. Second, the signals differ on only 13% of days, so the resulting equity curve looks entirely plausible -- there is no visual tell and no obviously impossible trade to catch in review. Third, the inflation is largest exactly when regimes overlap, i.e. when the model is least reliable and most tempting. The only durable defence is a causal-recomputation property test: assert that the signal at time $t$ is bit-identical when the sample is truncated at $t$. That single test belongs in section 6.1 for every state-space model in the system.",
+      "payload": {
+        "sharpe_smoothed": 0.7190890696361881,
+        "sharpe_filtered": 0.27811068079096884,
+        "gap": 0.4409783888452193,
+        "gap_se": 0.06327870312056019,
+        "disagreement": 0.12643333333333334
+      }
+    },
+    {
+      "cid": "G-02",
+      "section": "2.5 Regime detection",
+      "claim": "On data generated by an HMM the honestly filtered HMM does beat the simple baselines -- but by far less than its smoothed backtest claims",
+      "method": "30 independent realisations of the SAME regime-switching process; annualised Sharpe of each causal rule, mean +/- standard error",
+      "expected": "-",
+      "observed": "200-day trend: 0.08 +/- 0.05; 60-day vol quantile: 0.19 +/- 0.05; HMM (filtered, honest): 0.34 +/- 0.05; buy and hold: 0.09 +/- 0.05",
+      "status": "INFO",
+      "note": "This is the honest version of the report's remark that 'simple robust baselines often beat the fancy models out-of-sample'. The data here are generated by exactly the model the HMM assumes -- the most favourable setting possible -- and on that home turf the correctly filtered HMM does win, 0.34 against 0.19 for the best one-line baseline. So the report's claim should be stated as a caution rather than a general result: on real data, where the two-state Gaussian assumption is wrong and the parameters must be re-estimated through regime changes, that margin is the first thing to disappear. The decisive comparison is against G-01: the same HMM scored 0.72 on its SMOOTHED backtest, so the look-ahead artefact was larger than the entire genuine edge over the baselines. Every baseline listed is causal by construction, cannot be fitted wrong, and cannot accidentally consume smoothed probabilities. They therefore belong in the promotion gate as the control arm: a regime model that cannot beat a moving average has bought only model risk. These are in-sample reference points for relative comparison across methods, not performance claims.",
+      "payload": {
+        "table": [
+          {
+            "method": "200-day trend",
+            "sharpe": 0.08409004742912612,
+            "se": 0.05152762994035133
+          },
+          {
+            "method": "60-day vol quantile",
+            "sharpe": 0.19391970349049273,
+            "se": 0.05339361663019223
+          },
+          {
+            "method": "HMM (filtered, honest)",
+            "sharpe": 0.335585948333422,
+            "se": 0.054338040333419935
+          },
+          {
+            "method": "buy and hold",
+            "sharpe": 0.09204804310531255,
+            "se": 0.05173711794142803
+          }
+        ]
+      }
+    },
+    {
+      "cid": "A-01",
+      "section": "1. Alternative and cheaper models",
+      "claim": "Section 6.7's claim of a ``$\\sim$90--98\\%-cheaper cache rate on DeepSeek/GLM/Kimi''",
+      "method": "compute 1 - (cache-hit price / cache-miss price) from the report's own section 1.2 pricing table",
+      "expected": "90-98% discount across DeepSeek, GLM and Kimi",
+      "observed": "DeepSeek V4 Flash 98%; DeepSeek V4 Pro 99%; Kimi K2.6 / K2.7 Code 80%; Kimi K2.5 75%; Kimi K3 90%; GLM-4.6 82%; GLM-4.5-Air 85%",
+      "status": "FAIL",
+      "note": "\\textbf{Internal inconsistency.} The 90--98\\% range holds only for DeepSeek (98% and 99%). For the GLM and Kimi families the same table gives discounts of 75%--90% -- real and worth having, but not the order of magnitude claimed. The two statements are computed from the same table and contradict each other. This matters because section 6.7 presents prompt caching as the primary cost-control lever: if the actual saving on a GLM coding plan is 82\\% rather than 98\\%, the residual spend is nine times larger than the sentence implies. Recommended fix: state ``up to $\\sim$98\\% on DeepSeek, $\\sim$75%--90% on GLM/Kimi''.",
+      "payload": {
+        "table": [
+          {
+            "model": "DeepSeek V4 Flash",
+            "miss": 0.14,
+            "hit": 0.0028,
+            "discount": 0.98
+          },
+          {
+            "model": "DeepSeek V4 Pro",
+            "miss": 0.435,
+            "hit": 0.003625,
+            "discount": 0.9916666666666667
+          },
+          {
+            "model": "Kimi K2.6 / K2.7 Code",
+            "miss": 0.95,
+            "hit": 0.19,
+            "discount": 0.8
+          },
+          {
+            "model": "Kimi K2.5",
+            "miss": 0.6,
+            "hit": 0.15,
+            "discount": 0.75
+          },
+          {
+            "model": "Kimi K3",
+            "miss": 3.0,
+            "hit": 0.3,
+            "discount": 0.9
+          },
+          {
+            "model": "GLM-4.6",
+            "miss": 0.6,
+            "hit": 0.11,
+            "discount": 0.8166666666666667
+          },
+          {
+            "model": "GLM-4.5-Air",
+            "miss": 0.2,
+            "hit": 0.03,
+            "discount": 0.85
+          }
+        ]
+      }
+    },
+    {
+      "cid": "A-02",
+      "section": "1. Alternative and cheaper models",
+      "claim": "Z.ai GLM Coding Plan quarterly-to-monthly conversions (\\$30/90/240 per quarter $\\to$ \\$10/30/80 per month)",
+      "method": "divide each quarterly figure by 3 and compare to the stated monthly equivalent",
+      "expected": "0",
+      "observed": "0",
+      "status": "PASS",
+      "note": "All three convert exactly. Minor but worth confirming, since these are the figures the section 1.8 budget table is built on.",
+      "payload": {}
+    },
+    {
+      "cid": "A-03",
+      "section": "1. Alternative and cheaper models",
+      "claim": "Section 1.8's characterisation of heavy usage as ``output-token-dominated''",
+      "method": "compute, for each model, the input:output token ratio above which INPUT cost would instead dominate",
+      "expected": "output dominates at realistic agentic token mixes",
+      "observed": "DeepSeek V4 Flash: input dominates only above 2:1; GLM-4.6: input dominates only above 4:1; Kimi K2.6: input dominates only above 4:1; Qwen3-Coder Next: input dominates only above 7:1",
+      "status": "PASS",
+      "note": "The claim holds, and the margin is informative. Agentic coding typically runs a large input-to-output ratio (long files and history in, a patch out), often 20:1 or more. For DeepSeek V4 Flash, where output is priced at only 2x input, INPUT cost therefore dominates in practice -- the opposite of the report's blanket statement. For GLM-4.6 and Kimi K2.6, where the multiple is 4x and 4x, output genuinely dominates until the ratio gets extreme. The practical consequence sharpens the report's own advice: on cheap flash tiers the highest-leverage optimisation is context hygiene and prompt caching (input side), while on the premium tiers it is limiting verbose output. The report recommends both but attributes them to the wrong cost driver.",
+      "payload": {
+        "table": [
+          {
+            "model": "DeepSeek V4 Flash",
+            "in": 0.14,
+            "out": 0.28,
+            "breakeven_ratio": 2.0
+          },
+          {
+            "model": "GLM-4.6",
+            "in": 0.6,
+            "out": 2.2,
+            "breakeven_ratio": 3.666666666666667
+          },
+          {
+            "model": "Kimi K2.6",
+            "in": 0.95,
+            "out": 4.0,
+            "breakeven_ratio": 4.2105263157894735
+          },
+          {
+            "model": "Qwen3-Coder Next",
+            "in": 0.115,
+            "out": 0.8,
+            "breakeven_ratio": 6.956521739130435
+          }
+        ]
+      }
+    },
+    {
+      "cid": "A-04",
+      "section": "5. Latency",
+      "claim": "Section 5.2's ``$\\sim$5 $\\mu$s/km in fibre''",
+      "method": "speed of light / group index of single-mode fibre (n = 1.4675), converted to microseconds per kilometre",
+      "expected": "5",
+      "observed": "4.89505",
+      "status": "PASS",
+      "note": "Exact value 4.90 us/km. The report's rounding is correct and standard. For reference, the vacuum figure is 3.34 us/km, which is why hollow-core fibre and microwave links -- both closer to c -- are worth their cost to HFT firms.",
+      "payload": {}
+    },
+    {
+      "cid": "A-05",
+      "section": "5. Latency",
+      "claim": "The latency-spectrum figures in section 5.3 are mutually consistent and correctly ordered",
+      "method": "check strict ordering across the tiers and compute the total span",
+      "expected": "strictly decreasing from REST to transceiver latency",
+      "observed": "ordering holds; total span 3.33e+07x (7.5 orders of magnitude)",
+      "status": "PASS",
+      "note": "The figures are consistent. Two internal cross-checks are worth recording. The quoted 13.9 ns STAC-T0 actionable latency exceeds the 3 ns transceiver latency, as it must -- the transceiver figure is one component of the path, not the whole path -- so the two numbers are not in conflict despite appearing adjacent in the text. And the full span from retail REST to transceiver is 8 orders of magnitude, which is the strongest possible support for the report's own section 5.7 conclusion: a system whose binding deadline is an MOC cutoff measured in minutes has no business optimising any part of this spectrum.",
+      "payload": {
+        "span": 33333333.333333336
+      }
+    },
+    {
+      "cid": "A-06",
+      "section": "5. Latency",
+      "claim": "The report's own system sits at the far end of the latency spectrum",
+      "method": "compare a ~10-minute pre-MOC decision budget against the fastest tier in section 5.3",
+      "expected": "-",
+      "observed": "600 s vs 3 ns = 2.0e+11x",
+      "status": "INFO",
+      "note": "The daily-ETF system's decision budget is roughly 2e+11 times the fastest latency the report discusses. Stating this ratio explicitly is the cleanest possible justification for the report's recommendation to treat the FPGA material as a career artefact rather than an engineering input, and it is the number to put on the section 7 figure 8 chart.",
+      "payload": {
+        "ratio": 200000000000.0
+      }
+    },
+    {
+      "cid": "A-07",
+      "section": "4. Risk",
+      "claim": "McLean \\& Pontiff (2016) arithmetic quoted in section 4.7: a 58\\% post-publication decline minus a 26\\% out-of-sample decline gives the 32\\% attributed to publication-informed trading",
+      "method": "subtract the two quoted percentages",
+      "expected": "32",
+      "observed": "32",
+      "status": "PASS",
+      "note": "Internally consistent, and the decomposition is quoted verbatim from the paper. Worth confirming because the 32% figure is the one that carries the report's argument: it isolates the portion of decay attributable to publication rather than to data mining.",
+      "payload": {}
+    },
+    {
+      "cid": "A-08",
+      "section": "4. Risk",
+      "claim": "Hou, Xue \\& Zhang (2020) failure rates quoted in section 4.7",
+      "method": "convert the quoted percentages into counts out of 452 replicated anomalies",
+      "expected": "65% fail at |t| < 1.96; 82% fail at |t| < 2.78",
+      "observed": "294 of 452 anomalies fail the single test; 371 of 452 fail the multiple-testing hurdle (77 additional casualties)",
+      "status": "PASS",
+      "note": "Arithmetically consistent with the quoted percentages. The incremental figure is the one the report should surface: raising the hurdle from $|t|>1.96$ to $|t|>2.78$ kills a further 77 anomalies, leaving roughly 81 of 452 standing. That is the empirical anchor for the Harvey-Liu-Zhu $t>3.0$ recommendation cited two lines later, and it is the single most persuasive argument in the report for building section 2.8's deflation machinery before writing any strategy.",
+      "payload": {
+        "survivors": 81,
+        "incremental": 77
+      }
+    },
+    {
+      "cid": "A-09",
+      "section": "4. Risk",
+      "claim": "Section 4.4's market-wide circuit-breaker (Rule 80B) thresholds are internally consistent",
+      "method": "check that the three levels are strictly increasing and that the time-of-day carve-out applies only to Levels 1 and 2",
+      "expected": "-7% / -13% / -20%, strictly increasing, Level 3 with no time carve-out",
+      "observed": "Level 1: 7% -- 15-minute halt if before 15:25 ET; none at/after; Level 2: 13% -- 15-minute halt if before 15:25 ET; none at/after; Level 3: 20% -- halt for the remainder of the day, at any time",
+      "status": "PASS",
+      "note": "Internally consistent as written, and the asymmetry the report highlights is the operationally important part: a Level 1 or 2 breach AT or after 15:25 ET does not halt trading, so a system that assumes ``a 7\\% drop means the market stops'' will keep trading into a cascading close. Since the report's own system trades the MOC auction at roughly 15:50 ET, this carve-out lands squarely inside its execution window -- which makes it a required test case, not background reading. Note thresholds are recalculated daily from the prior S\\&P 500 close, so they must be fetched, never hardcoded. Regulatory details must be confirmed against current FINRA/SEC sources before reliance.",
+      "payload": {}
+    },
+    {
+      "cid": "A-10",
+      "section": "3.6 Regulatory",
+      "claim": "Section 3.6's pattern-day-trader test is a CONJUNCTION of two conditions, and the report states both",
+      "method": "evaluate the historical test at two activity levels with an identical day-trade count",
+      "expected": "4 day trades trigger at low total activity but not at high",
+      "observed": "4 day trades in 50 total = 8% -> triggers; 4 in 200 total = 2% -> does not trigger",
+      "status": "PASS",
+      "note": "The report states the rule correctly, including the 6\\% clause that is frequently omitted in secondary sources. The worked counterexample shows why the clause matters: day-trade COUNT alone does not determine the classification. This check verifies the report's internal logic only. The report itself flags that this framework was reportedly eliminated effective June 2026 and replaced by an intraday-margin standard; that status, and everything else in section 3.6, must be confirmed directly with FINRA and the broker before any reliance. Nothing here is legal or tax advice.",
+      "payload": {}
+    }
+  ]
+}

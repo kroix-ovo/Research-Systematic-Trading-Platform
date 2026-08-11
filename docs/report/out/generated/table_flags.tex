@@ -1,0 +1,16 @@
+\begingroup\small
+\begin{longtable}{@{}p{0.075\linewidth}p{0.26\linewidth}p{0.60\linewidth}@{}}
+\toprule
+\textbf{ID} & \textbf{Report section} & \textbf{Issue} \\
+\midrule\endhead
+\texttt{\small V-08b} & \small 2.2 Volatility estimation & \small Range estimators are biased LOW on real bars: a bar built from finitely many prints under-observes the true high and low \\
+\texttt{\small V-12} & \small 2.2 Volatility estimation & \small Naive $\sqrt{252}$ (or $\sqrt{12}$) annualisation overstates the Sharpe ratio when returns are positively autocorrelated \\
+\texttt{\small V-14} & \small 2.11 Backtest math & \small Applied to discrete simple returns, $g\approx\mu-\tfrac12\sigma^2$ is a truncated expansion whose error is material at high volatility \\
+\texttt{\small K-02} & \small 2.3 Volatility targeting & \small A leverage cap $\sum|w|\le L$ makes the vol target an upper bound, not an equality \\
+\texttt{\small Q-02} & \small 2.7 Risk metrics & \small The report's $\mu+z_\alpha\sigma$ is ambiguous without a sign convention \\
+\texttt{\small Q-08} & \small 2.7 Risk metrics & \small Cornish-Fisher is not monotone in the quantile for large skewness, so it can report a SMALLER loss at a HIGHER confidence level \\
+\texttt{\small S-04} & \small 2.8 Statistical validation & \small $\gamma_4$ in the PSR formula must be NON-EXCESS kurtosis, and the size of the error depends on the return frequency \\
+\texttt{\small S-14} & \small 2.8 Statistical validation & \small A PBO value computed from a single backtest matrix has very large sampling error and cannot be read as a precise number \\
+\texttt{\small E-03} & \small 2.9 Transaction cost \& market impact & \small $\kappa\approx\sqrt{\lambda\sigma^2/\eta}$ is the continuum limit of the exact $\kappa$, and drops the $\tilde\eta=\eta-\gamma\tau/2$ correction \\
+\bottomrule
+\end{longtable}\endgroup

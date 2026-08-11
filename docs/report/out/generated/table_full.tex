@@ -1,0 +1,152 @@
+\begingroup\footnotesize
+\begin{longtable}{@{}p{0.055\linewidth}p{0.065\linewidth}p{0.47\linewidth}p{0.34\linewidth}@{}}
+\toprule
+\textbf{Status} & \textbf{ID} & \textbf{Claim} & \textbf{Measured} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Status} & \textbf{ID} & \textbf{Claim} & \textbf{Measured} \\
+\midrule
+\endhead
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.1 Momentum}}\\[0.2em]
+\PASS & \texttt{\small R-01} & \small Cumulative return $r_{t-k\to t}=\prod(1+r_j)-1$ equals $\exp(\sum \ln(1+r_j))-1$ & \footnotesize\color{muted}0.0629191 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.11 Backtest math}}\\[0.2em]
+\INFO & \texttt{\small R-02} & \small Summing simple returns is not compounding; error grows with $n\sigma^2$ & \footnotesize\color{muted}naive sum 0.086645 \\
+\PASS & \texttt{\small R-03} & \small $r_{\log}=\ln(1+r)$ inverts to $r=e^{r_{\log}}-1$ & \footnotesize\color{muted}3.4694e-18 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.2 Volatility estimation}}\\[0.2em]
+\PASS & \texttt{\small V-01} & \small GARCH(1,1) unconditional variance $=\omega/(1-\alpha-\beta)$ & \footnotesize\color{muted}9.9881e-05 \\
+\INFO & \texttt{\small V-02} & \small Persistence alpha+beta maps to a variance half-life & \footnotesize\color{muted}34.3 days \\
+\PASS & \texttt{\small V-03} & \small RiskMetrics EWMA is exactly IGARCH(1,1) with $\omega=0,\ \alpha=1-\lambda,\ \beta=\lambda$ & \footnotesize\color{muted}0 \\
+\INFO & \texttt{\small V-04} & \small $\lambda\approx0.94$ (RiskMetrics daily) sets the memory of the estimator & \footnotesize\color{muted}half-life 11.2 d, centre of mass 15.7 d \\
+\PASS & \texttt{\small V-05} & \small Parkinson $\hat\sigma^2=\frac{1}{4\ln 2}E[\ln(H/L)^2]$ is unbiased for driftless GBM & \footnotesize\color{muted}0.000399567 \\
+\PASS & \texttt{\small V-06} & \small Garman-Klass $\hat\sigma^2=\tfrac12\ln(H/L)^2-(2\ln 2-1)\ln(C/O)^2$ is unbiased for driftless GBM & \footnotesize\color{muted}0.000398998 \\
+\PASS & \texttt{\small V-07} & \small Rogers-Satchell $\hat\sigma^2=\ln\frac{H}{C}\ln\frac{H}{O}+\ln\frac{L}{C}\ln\frac{L}{O}$ is unbiased for driftless GBM & \footnotesize\color{muted}0.000398941 \\
+\PASS & \texttt{\small V-08} & \small Range estimators are far more efficient than close-to-close & \footnotesize\color{muted}Parkinson 5.0x, Garman-Klass 7.8x, Rogers-Satchell 6.2x \\
+\FLAG & \texttt{\small V-08b} & \small Range estimators are biased LOW on real bars: a bar built from finitely many prints under-observes the true high and low & \footnotesize\color{muted}100 obs: -12.0\%; 200 obs: -9.1\%; 400 obs: -6.0\%; 800 obs: -4.5\%; 1600 obs: -3.0\%; 3200 obs: -2.2\%; 6400 obs: -1.7\%; fitted slope -1.21 \\
+\PASS & \texttt{\small V-09} & \small Rogers-Satchell is drift-independent; Parkinson and Garman-Klass are biased upward by drift & \footnotesize\color{muted}drift-induced bias change: parkinson +37.0\%, garman-klass +13.3\%, rogers-satchell +0.0\% \\
+\PASS & \texttt{\small V-10} & \small $\sigma_{\text{ann}}=\sigma_d\sqrt{252}$ under i.i.d. returns & \footnotesize\color{muted}0.158729 \\
+\PASS & \texttt{\small V-11} & \small Lo (2002) autocorrelation-corrected annualisation $SR_q=SR_1\,q/\sqrt{q+2\sum_{k<q}(q-k)\rho_k}$ & \footnotesize\color{muted}0.423316 \\
+\FLAG & \texttt{\small V-12} & \small Naive $\sqrt{252}$ (or $\sqrt{12}$) annualisation overstates the Sharpe ratio when returns are positively autocorrelated & \footnotesize\color{muted}rho=-0.2: -16.9\%; rho=+0.0: -0.0\%; rho=+0.1: +9.6\%; rho=+0.2: +20.3\%; rho=+0.3: +32.5\% \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.11 Backtest math}}\\[0.2em]
+\PASS & \texttt{\small V-13} & \small For GBM $dS/S=\mu\,dt+\sigma\,dW$ the log growth rate is EXACTLY $\mu-\tfrac12\sigma^2$ & \footnotesize\color{muted}0.0541921 \\
+\FLAG & \texttt{\small V-14} & \small Applied to discrete simple returns, $g\approx\mu-\tfrac12\sigma^2$ is a truncated expansion whose error is material at high volatility & \footnotesize\color{muted}sigma=5\%: err -0.0001; sigma=10\%: err -0.0004; sigma=20\%: err -0.0019; sigma=40\%: err -0.0127; sigma=60\%: err -0.0440; sigma=80\%: err -0.1078 \\
+\INFO & \texttt{\small V-15} & \small Why volatility targeting aids compounding, quantified & \footnotesize\color{muted}3.78 pp/yr \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.3 Volatility targeting}}\\[0.2em]
+\PASS & \texttt{\small K-01} & \small $w_{i,t}=\sigma^*/\sigma_{i,t}$ produces realised volatility $\sigma^*$ when $\sigma_{i,t}$ is known & \footnotesize\color{muted}0.149891 \\
+\FLAG & \texttt{\small K-02} & \small A leverage cap $\sum|w|\le L$ makes the vol target an upper bound, not an equality & \footnotesize\color{muted}realised 14.33\% (cap binds 22\% of the time) \\
+\PASS & \texttt{\small K-03} & \small Volatility targeting levers INTO a regime break because $\hat\sigma$ is backward-looking & \footnotesize\color{muted}median leverage entering the break 2.4x; a 2-sigma storm day then costs 21.6\% of capital in one session \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.6 Kelly criterion}}\\[0.2em]
+\PASS & \texttt{\small K-04} & \small $f^*=\mu/\sigma^2$ maximises the continuous-time log growth rate $g(f)=f\mu-\tfrac12 f^2\sigma^2$ & \footnotesize\color{muted}solved f* = mu/sigma**2, second derivative = -sigma**2 \\
+\PASS & \texttt{\small K-05} & \small Simulated log-wealth growth peaks at $f^*=\mu/\sigma^2$ & \footnotesize\color{muted}2 \\
+\PASS & \texttt{\small K-06} & \small $f^*=p-\frac{1-p}{b}$ maximises $p\ln(1+bf)+(1-p)\ln(1-f)$ for a $b{:}1$ payoff & \footnotesize\color{muted}solved [(b*p + p - 1)/b] \\
+\PASS & \texttt{\small K-07} & \small Numeric optimum of the discrete Kelly objective matches $p-(1-p)/b$ & \footnotesize\color{muted}0.1 \\
+\PASS & \texttt{\small K-08} & \small At fraction $c$ of full Kelly, growth is $c(2-c)$ of the maximum & \footnotesize\color{muted}simplified to c*(2 - c) \\
+\PASS & \texttt{\small K-09} & \small Full Kelly produces drawdowns that are unacceptable in practice; fractional Kelly buys a large drawdown reduction cheaply & \footnotesize\color{muted}c=1.00: growth 100\%, median DD -68\%, 5th-pct DD -90\%; c=0.50: growth 75\%, median DD -40\%, 5th-pct DD -65\%; c=0.25: growth 44\%, median DD -22\%, 5th-pct DD -39\% \\
+\PASS & \texttt{\small K-10} & \small Estimation error in $\mu$ dominates Kelly sizing, which is why the haircut must be severe & \footnotesize\color{muted}estimated f* has median 1.99, 5-95 pct [-0.64, 4.69]; 11\% of samples suggest more than 2x the true leverage \\
+\PASS & \texttt{\small K-11} & \small Kelly and volatility targeting are the same operation: full Kelly targets a portfolio volatility numerically equal to the Sharpe ratio & \footnotesize\color{muted}simplified to mu/sigma \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.4 Portfolio construction}}\\[0.2em]
+\PASS & \texttt{\small P-01} & \small $\max_w w^\top\mu-\frac{\gamma}{2}w^\top\Sigma w$ has closed-form solution $w^*=\frac{1}{\gamma}\Sigma^{-1}\mu$ & \footnotesize\color{muted}first-order condition solution equals the closed form identically \\
+\PASS & \texttt{\small P-02} & \small Numerical optimiser reproduces the Markowitz closed form & \footnotesize\color{muted}8.0758e-09 \\
+\PASS & \texttt{\small P-03} & \small Mean-variance 'error-maximises': $\Sigma^{-1}$ amplifies estimation noise into extreme, unstable weights & \footnotesize\color{muted}plug-in MV achieves median Sharpe 0.15 (-92\%); with Ledoit-Wolf shrinkage 0.16 (-91\%); median utility loss 99\% \\
+\PASS & \texttt{\small P-04} & \small Ledoit-Wolf is exactly $\hat\Sigma=(1-\delta)S+\delta F$ with $F$ the scaled identity target & \footnotesize\color{muted}1.0842e-19 \\
+\PASS & \texttt{\small P-05} & \small Shrinkage improves both conditioning and Frobenius estimation loss when T is small relative to N & \footnotesize\color{muted}condition number 22 -> 2; Frobenius loss 0.0656 -> 0.0333 (LW), 0.0335 (OAS) \\
+\PASS & \texttt{\small P-06} & \small Minimising $\sum_i(w_i(\Sigma w)_i-\frac1N w^\top\Sigma w)^2$ yields equal risk contributions $w_i(\Sigma w)_i=w_j(\Sigma w)_j$ & \footnotesize\color{muted}7.0193e-13 \\
+\PASS & \texttt{\small P-07} & \small Under equal pairwise correlation the ERC solution is exactly $w_i\propto1/\sigma_i$ (inverse-volatility weighting) & \footnotesize\color{muted}1.4183e-14 \\
+\PASS & \texttt{\small P-08} & \small HRP produces long-only weights summing to 1 without inverting the covariance matrix, and is dramatically more stable than minimum variance under resampling & \footnotesize\color{muted}weights sum to 1.0000000000, min weight 0.0070; median turnover between independent samples: HRP 0.534 vs min-variance 1.662 (3.1x worse) \\
+\PASS & \texttt{\small P-09} & \small $\Pi=\delta\Sigma w_{mkt}$ is the equilibrium return vector: feeding it back through $w=\frac1\delta\Sigma^{-1}\mu$ recovers $w_{mkt}$ & \footnotesize\color{muted}5.5511e-17 \\
+\PASS & \texttt{\small P-10} & \small With no information in the views ($\Omega\to\infty$) the Black-Litterman posterior collapses to the equilibrium prior $\Pi$ & \footnotesize\color{muted}2.7756e-16 \\
+\PASS & \texttt{\small P-11} & \small With certain views ($\Omega\to0$) the posterior satisfies $P\,E[R]=Q$ exactly & \footnotesize\color{muted}1.4286e-12 \\
+\PASS & \texttt{\small P-12} & \small The cost-aware objective $w^\top\mu-\frac\gamma2 w^\top\Sigma w-(w-w_0)^\top\Lambda(w-w_0)$ has closed form $w^*=(\gamma\Sigma+2\Lambda)^{-1}(\mu+2\Lambda w_0)$ & \footnotesize\color{muted}7.2175e-09 \\
+\FAIL & \texttt{\small P-13} & \small Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do & \footnotesize\color{muted}quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.7 Risk metrics}}\\[0.2em]
+\PASS & \texttt{\small Q-01} & \small Parametric VaR as a RETURN quantile: $q_{1-\alpha}=\mu+z_{1-\alpha}\sigma$ & \footnotesize\color{muted}-0.0274136 \\
+\FLAG & \texttt{\small Q-02} & \small The report's $\mu+z_\alpha\sigma$ is ambiguous without a sign convention & \footnotesize\color{muted}return-quantile reading -0.0274; loss-quantile reading +0.0284 \\
+\PASS & \texttt{\small Q-03} & \small VaR is NOT subadditive: a concrete counterexample & \footnotesize\color{muted}empirical: VaR(A)=0, VaR(B)=0, VaR(A+B)=100 > 0 \\
+\PASS & \texttt{\small Q-04} & \small CVaR / Expected Shortfall IS subadditive: $ES(A+B)\le ES(A)+ES(B)$ & \footnotesize\color{muted}largest normalised gap ES(A+B)-ES(A)-ES(B) across 300 trials: -0.058 (must be <= 0; negative means diversification benefit) \\
+\PASS & \texttt{\small Q-05} & \small Gaussian Expected Shortfall $=\mu+\sigma\frac{\phi(z_\alpha)}{1-\alpha}$ & \footnotesize\color{muted}2.33695 \\
+\INFO & \texttt{\small Q-06} & \small Under normality ES exceeds VaR by a fixed, modest factor -- which is exactly why normality is dangerous here & \footnotesize\color{muted}normal 1.193x; Student-t(3) empirical 1.588x \\
+\PASS & \texttt{\small Q-07} & \small Cornish-Fisher $z_{cf}=z+\frac{(z^2-1)\gamma_3}{6}+\frac{(z^3-3z)(\gamma_4-3)}{24}-\frac{(2z^3-5z)\gamma_3^2}{36}$ improves on the Gaussian quantile for skewed/fat-tailed data & \footnotesize\color{muted}Cornish-Fisher wins 5/6; skew-normal(a=4)@95\%: CF err 1.0\% vs Gaussian 7.4\%; skew-normal(a=4)@99\%: CF err 0.6\% vs Gaussian 12.8\%; Student-t(6)@95\%: CF err 0.0\% vs Gaussian 3.7\%; Student-t(6)@99\%: CF err 17.8\% vs Gaussian 9.2\%; lognormal(s=0.4)@95\%: CF err 1.0\% vs Gaussian 5.5\%; lognormal(s=0.4)@99\%: CF err 3.3\% vs Gaussian 15.9\% \\
+\FLAG & \texttt{\small Q-08} & \small Cornish-Fisher is not monotone in the quantile for large skewness, so it can report a SMALLER loss at a HIGHER confidence level & \footnotesize\color{muted}non-monotone at (skew, excess kurt) = [(-3.0, 12.0)] \\
+\INFO & \texttt{\small Q-09} & \small Sharpe, Sortino and Calmar rank the same track record differently under negative skew & \footnotesize\color{muted}Sharpe 0.53, Sortino 0.77, Calmar 0.20 (CAGR 6.2\%, max drawdown -30.2\%) \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.8 Statistical validation}}\\[0.2em]
+\PASS & \texttt{\small S-01} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- Gaussian & \footnotesize\color{muted}0.028321 \\
+\PASS & \texttt{\small S-02} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- Student-t(6) & \footnotesize\color{muted}0.0283592 \\
+\PASS & \texttt{\small S-03} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- skew-normal(a=6) & \footnotesize\color{muted}0.027564 \\
+\FLAG & \texttt{\small S-04} & \small $\gamma_4$ in the PSR formula must be NON-EXCESS kurtosis, and the size of the error depends on the return frequency & \footnotesize\color{muted}daily: -0.1\%; weekly: -0.5\%; monthly: -1.9\%; quarterly: -5.1\% \\
+\PASS & \texttt{\small S-05} & \small Under normality the PSR denominator reduces exactly to Lo (2002)'s $\sqrt{1+\widehat{SR}^2/2}$ & \footnotesize\color{muted}1.0009 \\
+\PASS & \texttt{\small S-06} & \small PSR is a calibrated probability: under the null $SR=SR^*$ it is uniformly distributed & \footnotesize\color{muted}KS statistic 0.0024, p = 0.971; empirical P(PSR > 0.95) = 0.0490 (nominal 0.05) \\
+\PASS & \texttt{\small S-07} & \small False Strategy Theorem: $E[\max_N\widehat{SR}]\approx\sqrt{V[\widehat{SR}]}[(1-\gamma)\Phi^{-1}(1-\frac1N)+\gamma\Phi^{-1}(1-\frac1{N e})]$ & \footnotesize\color{muted}N=10: formula 1.575 vs MC 1.537 (+2.4\%); N=50: formula 2.276 vs MC 2.252 (+1.1\%); N=100: formula 2.531 vs MC 2.507 (+0.9\%); N=500: formula 3.053 vs MC 3.034 (+0.6\%); N=1000: formula 3.255 vs MC 3.242 (+0.4\%); N=5000: formula 3.688 vs MC 3.681 (+0.2\%); N=10000: formula 3.861 vs MC 3.858 (+0.1\%) \\
+\PASS & \texttt{\small S-08} & \small Report's headline claim: with $E[SR]=0$, $V[SR]=1$, after 1{,}000 independent backtests the expected maximum Sharpe is \textbf{3.26} & \footnotesize\color{muted}3.25512 \\
+\INFO & \texttt{\small S-09} & \small The deflation hurdle rises with the number of trials, and a routine parameter sweep already implies thousands of trials & \footnotesize\color{muted}N=10: hurdle SR 1.57; N=100: hurdle SR 2.53; N=1,000: hurdle SR 3.26; N=10,000: hurdle SR 3.86; N=100,000: hurdle SR 4.39 \\
+\PASS & \texttt{\small S-10} & \small Minimum Track Record Length: solving PSR $=$ target for $n$ gives $n^*=1+\left[1-\gamma_3 SR+\frac{\gamma_4-1}{4}SR^2\right]\left(\frac{z_{target}}{SR-SR^*}\right)^2$ & \footnotesize\color{muted}2729.54 \\
+\INFO & \texttt{\small S-11} & \small Track record length required for 95\% confidence scales as $1/SR^2$ & \footnotesize\color{muted}SR 0.3: 30.1 yr; SR 0.5: 10.8 yr; SR 0.8: 4.2 yr; SR 1.0: 2.7 yr; SR 1.5: 1.2 yr; SR 2.0: 0.7 yr \\
+\PASS & \texttt{\small S-12} & \small PBO via CSCV is calibrated: under the null that no strategy has an edge, $E[\text{PBO}]=0.5$ & \footnotesize\color{muted}mean PBO = 0.530 +/- 0.028 (standard error) \\
+\PASS & \texttt{\small S-13} & \small PBO has power: a strategy with a genuine persistent edge drives PBO to zero, while a pure parameter sweep does not & \footnotesize\color{muted}genuine edge PBO = 0.000; correlated parameter sweep PBO = 0.353 \\
+\FLAG & \texttt{\small S-14} & \small A PBO value computed from a single backtest matrix has very large sampling error and cannot be read as a precise number & \footnotesize\color{muted}T=1000, N=40: mean 0.49, sd 0.19; T=2500, N=40: mean 0.52, sd 0.20; T=1000, N=200: mean 0.47, sd 0.16; T=5000, N=200: mean 0.52, sd 0.15 \\
+\PASS & \texttt{\small S-15} & \small Shuffled k-fold CV manufactures skill out of nothing when labels overlap in time; contiguous folds with purging and embargo do not & \footnotesize\color{muted}shuffled k-fold 0.5261 +/- 0.0044; contiguous blocks (no purge) 0.4985 +/- 0.0058; purged + embargoed 0.5009 +/- 0.0060 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.9 Transaction cost \& market impact}}\\[0.2em]
+\PASS & \texttt{\small E-01} & \small The Almgren-Chriss trajectory $x_j=X\frac{\sinh(\kappa(T-t_j))}{\sinh(\kappa T)}$ satisfies the discrete stationarity condition $x_{j-1}-2x_j+x_{j+1}=2(\cosh(\kappa\tau)-1)x_j$ & \footnotesize\color{muted}verified identically in sympy \\
+\PASS & \texttt{\small E-02} & \small The sinh trajectory IS the optimum of $E[\text{cost}]+\lambda V[\text{cost}]$ & \footnotesize\color{muted}6.5821e-13 \\
+\FLAG & \texttt{\small E-03} & \small $\kappa\approx\sqrt{\lambda\sigma^2/\eta}$ is the continuum limit of the exact $\kappa$, and drops the $\tilde\eta=\eta-\gamma\tau/2$ correction & \footnotesize\color{muted}N=5: kappa error -0.49\%, cost penalty +9.76e-09; N=10: kappa error -0.25\%, cost penalty +2.57e-09; N=25: kappa error -0.10\%, cost penalty +4.18e-10; N=50: kappa error -0.05\%, cost penalty +1.05e-10; N=200: kappa error -0.01\%, cost penalty +6.56e-12; N=1000: kappa error -0.00\%, cost penalty +2.62e-13 \\
+\PASS & \texttt{\small E-04} & \small As $\lambda\to0$ (risk neutral) the optimal Almgren-Chriss trajectory becomes linear -- i.e. TWAP & \footnotesize\color{muted}2.3103e-11 \\
+\PASS & \texttt{\small E-05} & \small Higher risk aversion $\lambda$ implies faster liquidation & \footnotesize\color{muted}lambda=1e-08: 0.50 of horizon; lambda=1e-06: 0.50 of horizon; lambda=1e-04: 0.34 of horizon; lambda=1e-02: 0.04 of horizon \\
+\PASS & \texttt{\small E-06a} & \small Almgren-Chriss expected cost $\frac{\gamma X^2}{2}+\epsilon X+\frac{\tilde\eta}{\tau}\sum n_k^2$ matches simulation & \footnotesize\color{muted}2.6235e+06 \\
+\PASS & \texttt{\small E-06b} & \small Almgren-Chriss cost variance $\sigma^2\tau\sum x_k^2$ matches simulation & \footnotesize\color{muted}2.8688e+10 \\
+\PASS & \texttt{\small E-07} & \small The Almgren-Chriss efficient frontier of execution (expected cost vs cost variance) is monotone decreasing and convex & \footnotesize\color{muted}monotone: True; convex: True; expected cost spans 2623750 to 23730114, variance spans 1.95e+09 to 2.96e+10 \\
+\PASS & \texttt{\small E-08} & \small Square-root law $\Delta P\approx Y\sigma\sqrt{Q/V}$ is concave: doubling order size raises impact by $\sqrt2$, not 2 & \footnotesize\color{muted}ratio = sqrt(2) \\
+\INFO & \texttt{\small E-09} & \small Market impact is negligible at retail size in a liquid ETF, and that is the structural edge & \footnotesize\color{muted}$10,000 order in $5B ADV: 0.18 bp; $100,000 order in $5B ADV: 0.56 bp; $1,000,000 order in $5B ADV: 1.78 bp; $100,000 order in $0.05B ADV: 5.63 bp \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.10 Microstructure}}\\[0.2em]
+\PASS & \texttt{\small E-10} & \small Kyle's lambda: solving the joint fixed point of market efficiency and informed optimality gives $\lambda=\frac12\sqrt{\Sigma_0/\sigma_u^2}$ and $\beta=\sigma_u/\sqrt{\Sigma_0}$ & \footnotesize\color{muted}lambda* = sqrt(Sigma\_0)/(2*sigma\_u), beta* = sigma\_u/sqrt(Sigma\_0) \\
+\PASS & \texttt{\small E-11} & \small Roll's implied spread $s=2\sqrt{-\mathrm{Cov}(\Delta p_t,\Delta p_{t-1})}$ recovers the true bid-ask spread & \footnotesize\color{muted}s=0.01: estimate 0.0100 (-0.4\%); s=0.02: estimate 0.0200 (+0.1\%); s=0.05: estimate 0.0500 (+0.0\%); s=0.10: estimate 0.1001 (+0.1\%) \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 6.5 Pairs / statistical arbitrage}}\\[0.2em]
+\PASS & \texttt{\small M-01} & \small Ornstein-Uhlenbeck stationary distribution is $\mathcal N(\mu,\ \sigma^2/2\theta)$ -- mean & \footnotesize\color{muted}0.400108 \\
+\PASS & \texttt{\small M-02} & \small Ornstein-Uhlenbeck stationary variance $=\sigma^2/2\theta$ & \footnotesize\color{muted}0.269929 \\
+\PASS & \texttt{\small M-03} & \small Exact OU half-life from the regression slope is $-\ln 2/\ln(1+\lambda)$, not $-\ln 2/\lambda$ & \footnotesize\color{muted}max error of the exact formula 1.01\%; theta=0.02: true 34.7, exact 34.3; theta=0.05: true 13.9, exact 13.8; theta=0.10: true 6.9, exact 7.0; theta=0.25: true 2.8, exact 2.8; theta=0.50: true 1.4, exact 1.4; theta=1.00: true 0.7, exact 0.7 \\
+\FAIL & \texttt{\small M-04} & \small The report's half-life $=-\ln 2/\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion & \footnotesize\color{muted}theta=0.02 (true HL 34.7): report 34.7 (-0\%); theta=0.05 (true HL 13.9): report 14.2 (+2\%); theta=0.10 (true HL 6.9): report 7.3 (+6\%); theta=0.25 (true HL 2.8): report 3.1 (+14\%); theta=0.50 (true HL 1.4): report 1.8 (+27\%); theta=1.00 (true HL 0.7): report 1.1 (+58\%) \\
+\PASS & \texttt{\small M-05} & \small Engle-Granger residuals must be tested with cointegration critical values, NOT standard ADF critical values & \footnotesize\color{muted}naive ADF critical values reject 57.0\% of the time (nominal 5\%); proper Engle-Granger critical values reject 4.7\% \\
+\PASS & \texttt{\small M-06} & \small Johansen trace test recovers the rank of $\Pi$, i.e. the number of cointegrating vectors & \footnotesize\color{muted}correct rank identified in 85\% of replications \\
+\PASS & \texttt{\small M-07} & \small A Kalman filter tracks a time-varying hedge ratio $\beta_t$ substantially better than rolling OLS, including through a structural break & \footnotesize\color{muted}rolling OLS 30d: RMSE 0.0272; rolling OLS 60d: RMSE 0.0372; rolling OLS 120d: RMSE 0.0520; Kalman: RMSE 0.0082 (Kalman is 3.3x better than the best window) \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.12 Where ML fits}}\\[0.2em]
+\PASS & \texttt{\small F-01d30} & \small Fractional-differencing weights $w_k=-w_{k-1}\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.3$ & \footnotesize\color{muted}5.5511e-17 \\
+\PASS & \texttt{\small F-01d50} & \small Fractional-differencing weights $w_k=-w_{k-1}\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.5$ & \footnotesize\color{muted}0 \\
+\PASS & \texttt{\small F-01d75} & \small Fractional-differencing weights $w_k=-w_{k-1}\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=0.75$ & \footnotesize\color{muted}0 \\
+\PASS & \texttt{\small F-01d100} & \small Fractional-differencing weights $w_k=-w_{k-1}\frac{d-k+1}{k}$ reproduce the binomial expansion of $(1-B)^d$ at $d=1.0$ & \footnotesize\color{muted}0 \\
+\PASS & \texttt{\small F-02} & \small At $d=1$ fractional differencing reduces exactly to the ordinary first difference $(1,-1,0,0,\dots)$ & \footnotesize\color{muted}[1, -1, 0e+00, 0e+00, ...] \\
+\PASS & \texttt{\small F-03} & \small Fractional differentiation attains stationarity at $d\ll1$ while retaining most of the memory that $d=1$ destroys & \footnotesize\color{muted}minimum d passing ADF at 5\% is d=0.20 (correlation with the original series 0.98); at d=1 the correlation has fallen to 0.03 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 2.5 Regime detection}}\\[0.2em]
+\PASS & \texttt{\small G-01} & \small HMM \emph{smoothed} probabilities $P(z_t\mid r_{1:T})$ embed look-ahead; only \emph{filtered} $P(z_t\mid r_{1:t})$ are tradeable & \footnotesize\color{muted}mean smoothed Sharpe 0.72 vs filtered 0.28; gap 0.44 +/- 0.06 (standard error); the two signals disagree on 12.6\% of days \\
+\INFO & \texttt{\small G-02} & \small On data generated by an HMM the honestly filtered HMM does beat the simple baselines -- but by far less than its smoothed backtest claims & \footnotesize\color{muted}200-day trend: 0.08 +/- 0.05; 60-day vol quantile: 0.19 +/- 0.05; HMM (filtered, honest): 0.34 +/- 0.05; buy and hold: 0.09 +/- 0.05 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 1. Alternative and cheaper models}}\\[0.2em]
+\FAIL & \texttt{\small A-01} & \small Section 6.7's claim of a ``$\sim$90--98\%-cheaper cache rate on DeepSeek/GLM/Kimi'' & \footnotesize\color{muted}DeepSeek V4 Flash 98\%; DeepSeek V4 Pro 99\%; Kimi K2.6 / K2.7 Code 80\%; Kimi K2.5 75\%; Kimi K3 90\%; GLM-4.6 82\%; GLM-4.5-Air 85\% \\
+\PASS & \texttt{\small A-02} & \small Z.ai GLM Coding Plan quarterly-to-monthly conversions (\$30/90/240 per quarter $\to$ \$10/30/80 per month) & \footnotesize\color{muted}0 \\
+\PASS & \texttt{\small A-03} & \small Section 1.8's characterisation of heavy usage as ``output-token-dominated'' & \footnotesize\color{muted}DeepSeek V4 Flash: input dominates only above 2:1; GLM-4.6: input dominates only above 4:1; Kimi K2.6: input dominates only above 4:1; Qwen3-Coder Next: input dominates only above 7:1 \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 5. Latency}}\\[0.2em]
+\PASS & \texttt{\small A-04} & \small Section 5.2's ``$\sim$5 $\mu$s/km in fibre'' & \footnotesize\color{muted}4.89505 \\
+\PASS & \texttt{\small A-05} & \small The latency-spectrum figures in section 5.3 are mutually consistent and correctly ordered & \footnotesize\color{muted}ordering holds; total span 3.33e+07x (7.5 orders of magnitude) \\
+\INFO & \texttt{\small A-06} & \small The report's own system sits at the far end of the latency spectrum & \footnotesize\color{muted}600 s vs 3 ns = 2.0e+11x \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 4. Risk}}\\[0.2em]
+\PASS & \texttt{\small A-07} & \small McLean \& Pontiff (2016) arithmetic quoted in section 4.7: a 58\% post-publication decline minus a 26\% out-of-sample decline gives the 32\% attributed to publication-informed trading & \footnotesize\color{muted}32 \\
+\PASS & \texttt{\small A-08} & \small Hou, Xue \& Zhang (2020) failure rates quoted in section 4.7 & \footnotesize\color{muted}294 of 452 anomalies fail the single test; 371 of 452 fail the multiple-testing hurdle (77 additional casualties) \\
+\PASS & \texttt{\small A-09} & \small Section 4.4's market-wide circuit-breaker (Rule 80B) thresholds are internally consistent & \footnotesize\color{muted}Level 1: 7\% -- 15-minute halt if before 15:25 ET; none at/after; Level 2: 13\% -- 15-minute halt if before 15:25 ET; none at/after; Level 3: 20\% -- halt for the remainder of the day, at any time \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small 3.6 Regulatory}}\\[0.2em]
+\PASS & \texttt{\small A-10} & \small Section 3.6's pattern-day-trader test is a CONJUNCTION of two conditions, and the report states both & \footnotesize\color{muted}4 day trades in 50 total = 8\% -> triggers; 4 in 200 total = 2\% -> does not trigger \\
+\bottomrule
+\end{longtable}\endgroup

@@ -1,0 +1,119 @@
+\begin{caveat}{V-08b \; --- \; 2.2 Volatility estimation}
+\textbf{Claim under test.} Range estimators are biased LOW on real bars: a bar built from finitely many prints under-observes the true high and low
+
+\textbf{Method.} MC sweep over intraday observations per bar; slope compared against the Broadie-Glasserman-Kou continuity correction
+
+\textbf{Expected.} theory: bias \textasciitilde{} -1.46*m\textasciicircum{}(-1/2) \quad \textbf{Measured.} 100 obs: -12.0\%; 200 obs: -9.1\%; 400 obs: -6.0\%; 800 obs: -4.5\%; 1600 obs: -3.0\%; 3200 obs: -2.2\%; 6400 obs: -1.7\%; fitted slope -1.21
+
+The report lists Parkinson and Garman-Klass without this caveat. The unbiasedness proofs assume a continuously observed path; a real bar is a finite sample of prints. The fitted $m^{-1/2}$ slope (-1.21) is within \textasciitilde{}15\% of the Broadie-Glasserman-Kou prediction (-1.46), confirming the mechanism. Operationally: a thinly traded ETF whose bar holds \textasciitilde{}100 prints yields a Parkinson variance about 12\% too low. Section 2.3 divides by this number, so the error becomes systematic over-leverage. Use liquid instruments, or calibrate a discretisation correction from observed prints per bar.
+\end{caveat}
+
+\begin{caveat}{V-12 \; --- \; 2.2 Volatility estimation}
+\textbf{Claim under test.} Naive $\sqrt{252}$ (or $\sqrt{12}$) annualisation overstates the Sharpe ratio when returns are positively autocorrelated
+
+\textbf{Method.} Lo (2002) correction factor at several AR(1) coefficients, plus MC confirmation
+
+\textbf{Expected.} overstatement grows with rho \quad \textbf{Measured.} rho=-0.2: -16.9\%; rho=+0.0: -0.0\%; rho=+0.1: +9.6\%; rho=+0.2: +20.3\%; rho=+0.3: +32.5\%
+
+The report says annualisation 'assumes i.i.d.; autocorrelation biases it' but gives no magnitude. At $\rho=0.2$ -- unremarkable for a daily trend strategy -- naive scaling inflates the Sharpe by 20\% (MC-confirmed). Any strategy whose Sharpe clears a hurdle only after naive annualisation should be re-tested with the Lo correction. Smoothed or illiquid marks push $\rho$ higher still.
+\end{caveat}
+
+\begin{caveat}{V-14 \; --- \; 2.11 Backtest math}
+\textbf{Claim under test.} Applied to discrete simple returns, $g\approx\mu-\tfrac12\sigma^2$ is a truncated expansion whose error is material at high volatility
+
+\textbf{Method.} MC across sigma from 5\% to 80\% annual, 2M lognormal draws each
+
+\textbf{Expected.} error -> 0 as sigma -> 0 \quad \textbf{Measured.} sigma=5\%: err -0.0001; sigma=10\%: err -0.0004; sigma=20\%: err -0.0019; sigma=40\%: err -0.0127; sigma=60\%: err -0.0440; sigma=80\%: err -0.1078
+
+The report gives $g\approx\mu-\tfrac12\sigma^2$ without saying whether $\mu,\sigma$ are Ito parameters (where it is exact, V-13) or sample moments of simple returns (where it is not). At the \textasciitilde{}20\% volatility of a typical ETF sleeve the error is 0.19 pp -- small but not negligible against the 3.78 pp that V-15 attributes to vol targeting. At 80\% volatility it reaches 10.8 pp, or 82\% of the geometric return itself. Use the formula as intuition for why vol targeting aids compounding; never as the P\&L accounting identity. The backtester must compound realised returns.
+\end{caveat}
+
+\begin{caveat}{K-02 \; --- \; 2.3 Volatility targeting}
+\textbf{Claim under test.} A leverage cap $\sum|w|\le L$ makes the vol target an upper bound, not an equality
+
+\textbf{Method.} same simulation with cap L=1.0
+
+\textbf{Expected.} target 15.0\% \quad \textbf{Measured.} realised 14.33\% (cap binds 22\% of the time)
+
+The report presents the vol target and the leverage cap as independent constraints. They are not: whenever the cap binds, realised volatility falls below target (here 14.33\% vs 15.0\%). In calm regimes -- exactly when $\sigma^*/\sigma$ is largest -- the cap silently converts the strategy from vol-targeted to constant-leverage. The system should log cap-binding frequency as a first-class monitoring metric, because a strategy that spends most of its life against the cap is not the strategy that was backtested.
+\end{caveat}
+
+\begin{finding}{P-13 \; --- \; 2.4 Portfolio construction}
+\textbf{Claim under test.} Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do
+
+\textbf{Method.} sweep the starting weight away from the frictionless optimum and measure the traded amount under each cost model
+
+\textbf{Expected.} report claims quadratic costs give a no-trade region \quad \textbf{Measured.} quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04
+
+\textbf{Correction required.} Section 2.4 states that quadratic costs 'give a closed form AND a no-trade region'. The closed form is correct (P-12); the no-trade region is not. A smooth quadratic penalty has zero derivative at zero trade, so the first-order condition always prescribes a strictly positive trade -- the solution shrinks toward $w_0$ (partial adjustment) but never stops. A no-trade region requires a cost function with a KINK at zero, i.e. proportional/L1 costs, whose subgradient interval $[-c,c]$ absorbs small deviations. This is not pedantry: it changes the implementation. If the system is built on the quadratic model expecting bands to appear, it will rebalance every single day and bleed the cost the band was meant to save. Real spreads and commissions ARE proportional, so the L1 model is also the more faithful one. Recommended fix: either state the objective with an L1 term, or keep the quadratic form and impose the no-trade band as an explicit separate rule.
+\end{finding}
+
+\begin{caveat}{Q-02 \; --- \; 2.7 Risk metrics}
+\textbf{Claim under test.} The report's $\mu+z_\alpha\sigma$ is ambiguous without a sign convention
+
+\textbf{Method.} evaluate both readings at the same parameters
+
+\textbf{Expected.} one unambiguous number \quad \textbf{Measured.} return-quantile reading -0.0274; loss-quantile reading +0.0284
+
+Section 2.7 gives parametric VaR as $\mu+z_\alpha\sigma$ without stating whether $\alpha$ is the tail probability or the confidence level, or whether VaR is reported as a positive loss or a negative return. The two readings differ by roughly 0.0558 here -- a sign flip on the risk number itself. This is not a theoretical quibble: a sign error in a risk limit is precisely the class of defect the report's section 4.3 pre-trade controls exist to prevent, and it must be pinned down by a property-based test (section 6.1) asserting VaR $>$ 0 and VaR $\le$ CVaR under the house convention.
+\end{caveat}
+
+\begin{caveat}{Q-08 \; --- \; 2.7 Risk metrics}
+\textbf{Claim under test.} Cornish-Fisher is not monotone in the quantile for large skewness, so it can report a SMALLER loss at a HIGHER confidence level
+
+\textbf{Method.} scan z in [0.5, 3.5] at several (skew, excess kurtosis) pairs and test for a decreasing segment
+
+\textbf{Expected.} quantile function must be non-decreasing in z \quad \textbf{Measured.} non-monotone at (skew, excess kurt) = [(-3.0, 12.0)]
+
+The report lists Cornish-Fisher without its domain of validity. It is an asymptotic expansion, valid for mild non-normality only; at the skewness levels typical of an option-overlay or short-vol sleeve (section 4.6's XIV example) it can invert, reporting a smaller loss at 99\% than at 95\%. The runtime must assert monotonicity of the quantile function -- a natural Hypothesis property test (section 6.1) -- and fall back to historical or filtered-historical simulation when the assertion trips.
+\end{caveat}
+
+\begin{caveat}{S-04 \; --- \; 2.8 Statistical validation}
+\textbf{Claim under test.} $\gamma_4$ in the PSR formula must be NON-EXCESS kurtosis, and the size of the error depends on the return frequency
+
+\textbf{Method.} recompute the Sharpe standard error under both kurtosis conventions across sampling frequencies, at a fixed annualised Sharpe of 0.8
+
+\textbf{Expected.} identical results under either convention \quad \textbf{Measured.} daily: -0.1\%; weekly: -0.5\%; monthly: -1.9\%; quarterly: -5.1\%
+
+Section 2.8 defines $\hat\gamma_4$ only as 'kurtosis'. Both conventions are in common use and \texttt{scipy.stats.kurtosis} returns the EXCESS value by default, so the natural implementation is the wrong one. The error scales with the SQUARE of the per-period Sharpe, which makes it nearly invisible on daily data (-0.1\%) but material on monthly data (-1.9\%) and worse on quarterly (-5.1\%). Since fund-style track records are almost always evaluated monthly, the bug would surface precisely when the stakes are highest -- and it understates the standard error, which inflates PSR and DSR and lets strategies through the promotion gate that should have been rejected. The direction of the error is the dangerous one. Separately, note that the SKEWNESS term dominates at daily frequency: a realistic skew of $-0.8$ changes the standard error by +2.0\% on daily data, an order of magnitude more than the kurtosis term. Fix: define $\gamma_4=E[(r-\mu)^4]/\sigma^4$ explicitly in the report, and unit-test that a Gaussian sample gives $\gamma_4\approx3$ and that the denominator reduces to $\sqrt{1+\widehat{SR}^2/2}$.
+\end{caveat}
+
+\begin{caveat}{S-14 \; --- \; 2.8 Statistical validation}
+\textbf{Claim under test.} A PBO value computed from a single backtest matrix has very large sampling error and cannot be read as a precise number
+
+\textbf{Method.} 24 independent null datasets at each (T, N); report the spread of the resulting PBO estimates
+
+\textbf{Expected.} PBO should concentrate near 0.5 under the null \quad \textbf{Measured.} T=1000, N=40: mean 0.49, sd 0.19; T=2500, N=40: mean 0.52, sd 0.20; T=1000, N=200: mean 0.47, sd 0.16; T=5000, N=200: mean 0.52, sd 0.15
+
+The report presents PBO as a scalar to be compared against a threshold. In practice, at the data sizes a solo operator has, the estimator's own standard deviation under the null is around 0.19 at T=1000, N=40. Two honest runs of the same worthless strategy family can therefore return PBO $=0.25$ and PBO $=0.75$. Consequences for the build: (i) do not gate promotion on a single PBO point estimate; (ii) report a bootstrap confidence interval alongside it; (iii) prefer longer histories and larger strategy families, since the spread falls to 0.15 at T=5000, N=200. This does not weaken the case for PBO -- it is still the right diagnostic -- but a threshold rule written against a noisy statistic is a false gate, and false gates are worse than no gate because they are trusted.
+\end{caveat}
+
+\begin{caveat}{E-03 \; --- \; 2.9 Transaction cost \& market impact}
+\textbf{Claim under test.} $\kappa\approx\sqrt{\lambda\sigma^2/\eta}$ is the continuum limit of the exact $\kappa$, and drops the $\tilde\eta=\eta-\gamma\tau/2$ correction
+
+\textbf{Method.} compare the report's kappa against the exact root of cosh(kappa tau) = 1 + kappa\_tilde\textasciicircum{}2 tau\textasciicircum{}2/2, across N; also report the resulting objective-function penalty
+
+\textbf{Expected.} exact kappa \quad \textbf{Measured.} N=5: kappa error -0.49\%, cost penalty +9.76e-09; N=10: kappa error -0.25\%, cost penalty +2.57e-09; N=25: kappa error -0.10\%, cost penalty +4.18e-10; N=50: kappa error -0.05\%, cost penalty +1.05e-10; N=200: kappa error -0.01\%, cost penalty +6.56e-12; N=1000: kappa error -0.00\%, cost penalty +2.62e-13
+
+The approximation is sound but its conditions should be stated. Two distinct corrections are dropped. First, the exact $\kappa$ solves a transcendental equation whose solution approaches $\tilde\kappa$ only as $\tau\to0$. Second, the denominator should be $\tilde\eta=\eta-\gamma\tau/2$, not $\eta$: the permanent-impact parameter partially offsets the temporary one because half of each trade's permanent impact is paid by the trader's own remaining inventory. At a fine grid (N=1000) the error in $\kappa$ is -0.00\% and irrelevant; on a coarse schedule (N=5, i.e. five slices -- a realistic daily-ETF execution) it is -0.49\%. Crucially, the OBJECTIVE penalty is tiny in every case (9.8e-09 at worst), because the cost surface is very flat near its optimum. The practical conclusion for the report is reassuring and worth stating explicitly: execution-schedule optimisation is forgiving, so effort spent calibrating impact parameters precisely is better spent elsewhere -- which reinforces the report's own section 5.7 argument against premature optimisation.
+\end{caveat}
+
+\begin{finding}{M-04 \; --- \; 6.5 Pairs / statistical arbitrage}
+\textbf{Claim under test.} The report's half-life $=-\ln 2/\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion
+
+\textbf{Method.} same simulation; relative error of the report's formula against the known truth
+
+\textbf{Expected.} half-life estimate should equal ln(2)/theta \quad \textbf{Measured.} theta=0.02 (true HL 34.7): report 34.7 (-0\%); theta=0.05 (true HL 13.9): report 14.2 (+2\%); theta=0.10 (true HL 6.9): report 7.3 (+6\%); theta=0.25 (true HL 2.8): report 3.1 (+14\%); theta=0.50 (true HL 1.4): report 1.8 (+27\%); theta=1.00 (true HL 0.7): report 1.1 (+58\%)
+
+\textbf{Correction required.} Section 6.5 states 'Estimate via OLS of $\Delta X_t=\lambda X_{t-1}+c+\varepsilon_t$; then $\theta=-\lambda$ and half-life $=-\ln 2/\lambda$'. The exact discretisation of the OU process gives $\lambda=e^{-\theta\Delta t}-1$, so the correct inversion is $\theta=-\ln(1+\lambda)/\Delta t$ and half-life $=-\Delta t\ln 2/\ln(1+\lambda)$. The report's form is the first-order Taylor expansion, accurate only when $\theta\Delta t\ll1$. For slow reversion (theta $\le$ 0.05) the error is under 2.3\% and harmless. For the fast reversion that actually makes a pairs trade worth doing (theta $\ge$ 0.25) it reaches 58\%. The error is one-directional: the estimate is always too LONG. Operationally that means holding period limits, time-based stops and capital-allocation horizons are all set too generously, on the strategies where the mis-estimate is worst. The fix is one line of code and removes the bias entirely.
+\end{finding}
+
+\begin{finding}{A-01 \; --- \; 1. Alternative and cheaper models}
+\textbf{Claim under test.} Section 6.7's claim of a ``$\sim$90--98\%-cheaper cache rate on DeepSeek/GLM/Kimi''
+
+\textbf{Method.} compute 1 - (cache-hit price / cache-miss price) from the report's own section 1.2 pricing table
+
+\textbf{Expected.} 90-98\% discount across DeepSeek, GLM and Kimi \quad \textbf{Measured.} DeepSeek V4 Flash 98\%; DeepSeek V4 Pro 99\%; Kimi K2.6 / K2.7 Code 80\%; Kimi K2.5 75\%; Kimi K3 90\%; GLM-4.6 82\%; GLM-4.5-Air 85\%
+
+\textbf{Internal inconsistency.} The 90--98\% range holds only for DeepSeek (98\% and 99\%). For the GLM and Kimi families the same table gives discounts of 75\%--90\% -- real and worth having, but not the order of magnitude claimed. The two statements are computed from the same table and contradict each other. This matters because section 6.7 presents prompt caching as the primary cost-control lever: if the actual saving on a GLM coding plan is 82\% rather than 98\%, the residual spend is nine times larger than the sentence implies. Recommended fix: state ``up to $\sim$98\% on DeepSeek, $\sim$75\%--90\% on GLM/Kimi''.
+\end{finding}
