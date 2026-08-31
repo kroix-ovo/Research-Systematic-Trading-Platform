@@ -99,7 +99,9 @@ def note(ax, text: str, loc="lower right", fontsize=6.8, color=MUTED):
     xy = {"lower right": (0.985, 0.03, "right", "bottom"),
           "lower left": (0.015, 0.03, "left", "bottom"),
           "upper right": (0.985, 0.97, "right", "top"),
-          "upper left": (0.015, 0.97, "left", "top")}[loc]
+          "upper left": (0.015, 0.97, "left", "top"),
+          "upper center": (0.5, 0.97, "center", "top"),
+          "lower center": (0.5, 0.03, "center", "bottom")}[loc]
     ax.text(xy[0], xy[1], text, transform=ax.transAxes, ha=xy[2], va=xy[3],
             fontsize=fontsize, color=color, linespacing=1.35)
 

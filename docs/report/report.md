@@ -1,46 +1,49 @@
 \thispagestyle{empty}
 \begin{center}
 \vspace*{1.2cm}
-{\LARGE\bfseries Building a Deterministic Quant Research\\[0.25em]
-\& Paper-Trading Platform with Agentic\\[0.25em] Coding Assistants\par}
+{\LARGE\bfseries A Deterministic Quant Research\\[0.25em]
+and Paper-Trading Platform\\[0.25em]
+for Testing One Tradable Hypothesis\par}
 \vspace{0.7cm}
-{\Large\color{muted} Expanded and Verified Edition\par}
+{\Large\color{muted} Built with agentic coding assistants; checked by independent tests\par}
 \vspace{1.4cm}
 \begin{tcolorbox}[width=0.86\linewidth,colback=cpanel,colframe=rule,
                   boxrule=0.6pt,arc=2pt,left=14pt,right=14pt,top=11pt,bottom=11pt]
 \small
-Every mathematical claim in this report has been independently re-derived and
-tested. The verification suite runs \textbf{104 checks} across \textbf{16
-sections}, symbolically in \texttt{sympy}, numerically against optimisers, and
-by Monte Carlo against known generating processes.
+\textbf{Research claim.} A solo researcher can build a credible research and
+paper-trading system with coding agents, but the system is useful only if it
+keeps the agents outside the trading runtime and treats verification as a gate
+between an idea and an order. The platform itself is not evidence of an edge.
+Its job is to make one specific trading hypothesis testable, reproducible, and
+easy to reject.
 
 \vspace{0.5em}
-It found \textbf{three errors} and \textbf{nine claims that are correct only
-under an unstated assumption}. All are documented, quantified, and corrected in
-Part~I. The remaining 81 substantive claims verified as written.
+This edition applies that standard to its own design. The verification suite
+runs \textbf{115 checks} across \textbf{18 sections}, using symbolic algebra,
+independent numerical solves, and Monte Carlo tests against processes with
+known parameters. It found and corrected \textbf{three errors} and identified
+\textbf{nine claims that need an explicit assumption}. After the corrections,
+\textbf{84 substantive claims pass}; no check remains in FAIL status.
 
 \vspace{0.5em}
-The suite is deterministic: one master seed reproduces every number in this
-document.
+The random streams are deterministic. With the pinned dependencies, the suite
+reproduces the reported rounded values. Explicit tolerances cover ordinary
+last-bit differences between numerical platforms.
 \end{tcolorbox}
 \vspace{1.2cm}
-{\small\color{muted} 11 August 2026\par}
+{\small\color{muted} 12 August 2026\par}
 \end{center}
 
 \vspace{0.8cm}
 \begin{center}
 \begin{minipage}{0.88\linewidth}\footnotesize\color{muted}
-\textbf{Scope and disclaimer.} This report concerns software engineering,
-quantitative methodology, and tooling. \textbf{Nothing here is investment
-advice or a recommendation to trade or invest.} All pricing and capability
-figures are dated; the LLM market in 2026 moves weekly and several model names
-appearing in search results are of uncertain provenance, so any single-source
-pricing should be treated as provisional and verified against official vendor
-pages before committing budget. Regulatory and tax statements are engineering
-context only and must be confirmed with a qualified professional and with your
-employer's compliance function. Where this edition reports a simulated Sharpe
-ratio or return, it is a property of a synthetic process constructed to test a
-formula --- never a performance claim.
+\textbf{Scope and disclaimer.} This is a report about software engineering,
+quantitative methods, and tooling. \textbf{It is not investment advice and does
+not recommend a trade or an investment.} Prices, model capabilities, and
+regulatory details are time-sensitive; check the relevant vendor, regulator,
+broker, and employer before acting on them. A simulated Sharpe ratio or return
+in this report belongs to a synthetic process used to test a formula. It is not
+performance evidence.
 \end{minipage}
 \end{center}
 
@@ -48,99 +51,117 @@ formula --- never a performance claim.
 \tableofcontents
 \clearpage
 
-# Part 0 — About this edition
+# Part 0 — Introduction and scope
 
-## 0.1 What changed, and why
+## 0.1 The project goal and the claim
 
-The first edition of this report surveyed alternative models, mathematical
-methods, platforms, risk practice, and latency for a solo-operated quant
-research and paper-trading system. Its architecture recommendations were sound
-and are preserved here unchanged.
+The project has a practical end point: a small, deterministic research and
+paper-trading system that can tell its owner whether one liquid-market idea
+survives contact with real data. Agentic coding is part of the method, not part
+of the strategy. Agents can draft code, tests, and documentation, but they do
+not get to make trading decisions at runtime.
 
-What it did not do was *check its own mathematics*. That gap matters more here
-than in most surveys, because the report's central argument is that
-**backtest overfitting, not latency, is the dominant risk**, and that the
-highest-return engineering in the whole plan is the statistical-validation
-layer of Stage 5. A report making that argument has an obligation to be right
-about the statistics it recommends. If the Deflated Sharpe Ratio machinery is
-built from a mis-stated formula, the gate that decides whether a strategy is
-allowed to trade is itself unvalidated — and a false gate is worse than no gate,
-because it is trusted.
+The claim of this paper is narrower than "build a complete quant platform" and
+much narrower than "find alpha with AI": a well-tested platform can reduce the
+chance of fooling yourself, but it cannot create an economic edge. The next
+credible result must come from one vertical slice: a fixed universe, a reason
+for the signal to exist, point-in-time data, a simple baseline, purged
+walk-forward tests, realistic costs and borrow, and a sustained paper-trading
+record. Until that slice exists, this work is infrastructure and research
+method, not evidence that a strategy works.
 
-This edition closes that gap. Every equation in Section 2, every arithmetic
-claim in Sections 1, 4 and 5, and the pairs-trading estimators in Section 6.5
-have been re-derived from scratch and tested. The verification is not a
-literature check; nothing is accepted on authority. Each claim is either:
+That distinction determines the design. The system should make data lineage
+visible, keep random experiments reproducible, count every trial, and stop a
+strategy from promotion when it fails a pre-set test. It should also make it
+cheap to discard an idea. A platform that produces polished charts but hides
+those decisions would be a more efficient way to overfit.
 
-- proved symbolically in `sympy`, so the result is an identity rather than a
-  numerical coincidence;
-- solved numerically by an independent optimiser that assumes nothing about the
-  closed form, and compared against it; or
-- tested by Monte Carlo against a process whose true parameters are known by
-  construction.
+## 0.2 What this edition checks
 
-Where a claim survived, this edition says so and adds the magnitude the
-original omitted. Where it did not, this edition says exactly what is wrong,
-how large the error is, in which direction it fails, and what to do instead.
+The first edition surveyed alternative models, mathematical methods, platforms,
+risk practice, and latency for a solo-operated research and paper-trading
+system. This edition keeps that survey, but gives the verification layer a
+more exact role: it checks whether the machinery used to judge a strategy is
+itself correct.
 
-## 0.2 Results of the verification suite
+That matters because the report's central engineering judgment is that
+**backtest overfitting, not latency, is the dominant risk**. If a Deflated
+Sharpe Ratio or a purged cross-validation routine is wrong, the promotion gate
+can approve a bad result while appearing to work. A false gate is dangerous
+precisely because it looks like discipline.
+
+Every equation in Section 2, every arithmetic claim in Sections 1, 4, and 5,
+and the pairs-trading estimators in Section 6.5 have been re-derived and
+tested. The suite does not treat a citation or an existing implementation as a
+substitute for a check. A claim is accepted by one of three routes:
+
+- a symbolic derivation in `sympy`;
+- an independent numerical solve compared with the claimed closed form; or
+- a Monte Carlo experiment built from a process whose parameters are known.
+
+When a claim fails, the report gives the direction and size of the error and
+states the implementation change. When a claim needs an assumption, the
+assumption is written down. That is the standard the later empirical slice
+will have to meet as well.
+
+## 0.3 Results of the verification suite
 
 \input{out/generated/summary.tex}
 
-The three failures and nine caveats are the subject of Part I. The full
-104-row table is Appendix A.
+Part I covers the three corrections and nine remaining caveats. Appendix A
+contains all 115 rows.
 
-A note on what the status labels mean. **FAIL** means the claim is wrong as
-written and the report text must be changed. **FLAG** means the claim is
-correct but only under a condition the report does not state, and the condition
-is one a competent implementer could plausibly get wrong — these are not
-pedantry, they are latent defects. **PASS** means the claim is correct exactly
-as written. **INFO** marks a quantity derived during verification that is worth
-recording but is not itself a pass/fail claim.
+The status labels are simple. **FAIL** means the claim is wrong as written.
+**FLAG** means it is correct only when a missing condition is made explicit.
+**PASS** means it survives the stated test. **INFO** records a useful derived
+quantity that is not itself a pass/fail claim.
 
 \begin{keybox}{The single most useful outcome}
-Three of the twelve issues found (P-13, M-04, M-05) would each have produced a
-system that runs, produces plausible output, and is quietly wrong. None would
-have thrown an exception. None would have looked wrong on an equity curve. That
-is the characteristic failure mode of quantitative software, and it is the
-reason this report's emphasis on verification engineering — property-based
-tests, scoreboards, formal methods — is the correct emphasis.
+Three of the twelve issues found (P-13, M-04, and M-05) would have produced a
+system that ran and returned plausible numbers while being wrong. None would
+have raised an exception or made an equity curve visibly strange. That is why
+the verification layer belongs between research output and deployment.
 \end{keybox}
 
-## 0.3 Reproducing the results
+## 0.4 Reproducing the results
 
-Everything in this document regenerates from the repository:
+The report and its checks regenerate from the repository:
 
 ```bash
 cd Docs/report
-python3 verify/run_all.py      # 104 checks, ~6 min, writes out/verification_results.json
-python3 figures/fig_math.py    # mathematical figures, incl. 3D surfaces
-python3 figures/fig_systems.py # architecture and process diagrams
-python3 figures/fig_verify.py  # figures generated from the findings
-python3 gen_tables.py          # LaTeX tables built from the results JSON
+python3 -m venv ../../.venv
+../../.venv/bin/python -m pip install -r requirements.txt
+../../.venv/bin/python verify/run_all.py      # 115 checks, ~6 min
+../../.venv/bin/python figures/fig_math.py    # mathematical figures
+../../.venv/bin/python figures/fig_systems.py # architecture diagrams
+../../.venv/bin/python figures/fig_verify.py  # verification figures
+../../.venv/bin/python gen_tables.py          # tables from results JSON
 ./build.sh                     # assembles this PDF
 ```
 
-The suite is seeded from a single master constant (`MASTER_SEED = 20260811`).
-Re-running reproduces every figure in this document bit-for-bit. No verification
-number in the prose is hardcoded: the summary table, the findings tables, and
-Appendix A are all generated from the suite's own JSON output, so the text and
-the evidence cannot drift apart.
+The suite uses one master constant (`MASTER_SEED = 20260811`). With the pinned
+requirements, a new run reproduces the random streams and reported rounded
+values. Solver residuals can differ in their last bits across BLAS platforms,
+so acceptance decisions use explicit tolerances. The summary, findings tables,
+and Appendix A come from the suite's JSON output. Repeated values in the prose
+still need review when a check changes.
 
-This is the same determinism discipline the report recommends for the trading
-runtime itself, applied to the report about it.
+The report applies to itself the same determinism rule it recommends for the
+trading runtime.
 
 \clearpage
 
 # Part I — Findings
 
-## 1.1 Errors: claims that are wrong as written
+## 1.1 Three corrections
 
-\input{out/generated/table_fails.tex}
+The first verification run exposed three wrong claims. The text and checks now
+use the corrected versions, while the old formulations remain as regression
+guards so the same mistakes cannot quietly return.
 
 ### P-13 — Quadratic transaction costs do not create a no-trade region
 
-Section 2.4 states that the cost-aware objective
+The earlier Section 2.4 draft stated that the cost-aware objective
 
 $$\max_w\; w^\top\mu-\frac{\gamma}{2}w^\top\Sigma w-(w-w_0)^\top\Lambda(w-w_0)$$
 
@@ -151,11 +172,12 @@ The closed form is correct. Verification P-12 confirms it symbolically and
 numerically: the optimum is $w^*=(\gamma\Sigma+2\Lambda)^{-1}(\mu+2\Lambda w_0)$,
 matching a BFGS solve to $7\times10^{-9}$.
 
-The no-trade region is not correct. A quadratic penalty is smooth at zero, so
-its derivative there is zero, and the first-order condition therefore always
-prescribes a strictly positive trade. The solution shrinks toward $w_0$ —
-partial adjustment — but never stops. A no-trade region requires a cost
-function with a **kink** at zero, i.e. proportional (L1) costs, whose
+The no-trade-region claim was not correct. A quadratic penalty is smooth and
+has zero marginal cost at zero trade. Therefore, whenever the frictionless
+objective has a nonzero directional derivative at the current book, some small
+trade improves the objective. The solution shrinks toward $w_0$ -- partial
+adjustment -- but does not stop inside a band. A no-trade region requires a
+cost function with a **kink** at zero, i.e. proportional (L1) costs, whose
 subgradient interval $[-c,c]$ can absorb small deviations.
 
 Sweeping the starting book away from the frictionless optimum makes this
@@ -171,14 +193,13 @@ model expecting bands to emerge, it will rebalance every single day and bleed
 precisely the cost the band was intended to save. Real spreads and commissions
 *are* proportional, so the L1 model is also the more faithful one.
 
-**Recommended fix.** Either state the objective with an L1 cost term, or keep
-the quadratic form for its closed-form convenience and impose the no-trade band
-as an explicit, separate rule. Do not expect the band to fall out of the
-quadratic algebra.
+**Applied fix.** Section 2.4 now describes the quadratic model as partial
+adjustment only and assigns a no-trade band to an L1 cost term (or to a separate
+explicit rule). P-13 is now a passing regression check of that distinction.
 
 ### M-04 — The Ornstein–Uhlenbeck half-life formula is biased
 
-Section 6.5 gives the standard estimation recipe: regress
+The earlier Section 6.5 draft gave the estimation recipe: regress
 $\Delta X_t=\lambda X_{t-1}+c+\varepsilon_t$, then "$\theta=-\lambda$ and
 **half-life $=-\ln 2/\lambda$**".
 
@@ -211,22 +232,20 @@ The exact formula recovers the truth to within 1% at every speed (M-03).
 
 ![](figures/fig15_meanrev.pdf)
 
-Two features make this worth correcting rather than tolerating. The error is
-**one-directional** — the estimate is always too *long*, never too short. And it
-is worst exactly where it matters most: slow-reverting pairs are barely
-affected, but a pair with a two-day half-life is the kind actually worth
-trading, and there the estimate is wrong by more than half. Holding-period
-limits, time-based stops, and capital-allocation horizons would all be set too
-generously, on precisely the strategies where the mis-estimate is largest.
+The error is **one-directional**: the estimate is always too *long*. It is also
+largest for fast-reverting pairs. A pair with a two-day half-life can receive a
+holding limit, time stop, or capital allocation based on an estimate more than
+half too high.
 
-**Recommended fix.** Use $-\ln 2/\ln(1+\lambda)$. It is a one-line change that
-removes the bias entirely.
+**Applied fix.** Section 6.5 now uses
+$-\Delta t\ln 2/\ln(1+\lambda)$. M-04 retains the superseded Euler expression
+only as a passing regression guard that proves why it must not return.
 
-### A-01 — The prompt-caching discount claim contradicts the report's own table
+### A-01 — The prompt-caching discount claim is now provider-specific
 
-Section 6.7 recommends prompt caching as the primary cost-control lever,
-describing "a stable system-prompt prefix hits the **~90–98%-cheaper cache
-rate** on DeepSeek/GLM/Kimi."
+The earlier Section 6.7 draft described a stable prompt prefix as hitting a
+blanket **~90–98%-cheaper cache rate** on DeepSeek/GLM/Kimi. The corrected
+edition uses separate provider ranges.
 
 Computing $1-(\text{cache-hit price}/\text{cache-miss price})$ from the report's
 own Section 1.2 pricing table:
@@ -241,24 +260,23 @@ own Section 1.2 pricing table:
 | GLM-4.6 | 0.60 | 0.11 | 82% |
 | GLM-4.5-Air | 0.20 | 0.03 | 85% |
 
-The 90–98% range holds for DeepSeek. For the GLM and Kimi families the same
-table gives 75–90%. These are real and worth having, but they are not the
-order of magnitude claimed, and the two statements are computed from the same
-data.
+DeepSeek spans 98–99% after rounding (the Pro figure is 99.17%). For the GLM
+and Kimi families the same table gives 75–90%. The earlier blanket range was
+therefore internally inconsistent with the pricing table.
 
 This matters for budgeting. If the residual spend after caching on a GLM coding
 plan is 18% of list rather than 2%, it is nine times larger than the sentence
 implies — which changes where the Section 1.8 budget lands.
 
-**Recommended fix.** State it as "up to ~98% on DeepSeek, ~75–90% on GLM and
-Kimi."
+**Applied fix.** Section 6.7 now states "~98–99% on DeepSeek and ~75–90% on
+GLM/Kimi." A-01 recomputes both displayed ranges from the table and now passes.
 
 ## 1.2 Caveats: claims correct only under an unstated condition
 
 \input{out/generated/table_flags.tex}
 
-Four of these deserve highlighting because each is a plausible implementation
-trap rather than a technicality. The full detail for all nine is in Appendix B.
+Four deserve separate discussion because each is a plausible implementation
+trap. The full detail for all nine is in Appendix B.
 
 ### S-04 — $\gamma_4$ in the PSR formula must be non-excess kurtosis
 
@@ -298,10 +316,10 @@ PSR and DSR, admitting strategies that should have been rejected.
 unit-test two invariants: a Gaussian sample must return $\gamma_4\approx3$, and
 the general formula must equal $\sqrt{1+\widehat{SR}^2/2}$ on Gaussian input.
 
-Worth noting alongside: at daily frequency the **skewness** term dominates the
-kurtosis term by an order of magnitude. A realistic skew of $-0.8$ changes the
-daily standard error by $+2.4\%$, against $0.1\%$ for the kurtosis convention.
-If only one correction can be implemented carefully, make it the skew term.
+At daily frequency the **skewness** term dominates the kurtosis term by an
+order of magnitude. A skew of $-0.8$ changes the daily standard error by
+$+2.4\%$, against $0.1\%$ for the kurtosis convention. If only one correction
+can be implemented carefully, make it the skew term.
 
 ### S-14 — PBO is a correct diagnostic, and a noisy one
 
@@ -329,9 +347,8 @@ rule written against a statistic with that spread is a false gate.
 
 **Recommended fix.** Do not gate promotion on a single PBO point estimate.
 Report a bootstrap confidence interval alongside it, and prefer longer
-histories and larger strategy families. This does not weaken the case for PBO —
-it remains the right diagnostic — but the report should present it as an
-interval, not a number.
+histories and larger strategy families. PBO remains useful, but it should be
+reported as an interval rather than a single number.
 
 ### G-01 — The HMM look-ahead trap is silent and expensive
 
@@ -347,14 +364,12 @@ the identical long/flat rule on both:
 
 ![](figures/fig17_hmm_lookahead.pdf)
 
-Three properties make this the most valuable single property test in the whole
-plan. The trap is **silent**: `predict_proba` and `predict` in `hmmlearn`
+The trap is **silent**: `predict_proba` and `predict` in `hmmlearn`
 return smoothed posteriors by default, so the wrong answer is what a careful
 implementer produces on the first attempt. The two signals differ on only
 12.6% of days, so the resulting equity curve looks entirely plausible — there
-is no visual tell and no impossible trade to catch in review. And the inflation
-is largest exactly when regimes overlap, i.e. when the model is least reliable
-and most tempting.
+is no visual tell and no impossible trade to catch in review. The inflation is
+largest when regimes overlap, when the model is least reliable.
 
 **Recommended fix.** Add a causal-recomputation property test to Section 6.1:
 assert that the signal at time $t$ is bit-identical when the input sample is
@@ -381,8 +396,8 @@ biased downward:
 | 6,400 | $-1.7\%$ |
 
 The fitted $m^{-1/2}$ slope of $-1.21$ is within 15% of the
-Broadie–Glasserman–Kou continuity-correction prediction of $-1.46$, confirming
-the mechanism rather than merely observing the pattern.
+Broadie--Glasserman--Kou continuity-correction prediction of $-1.46$. The
+agreement is consistent with the sampling mechanism described above.
 
 ![](figures/fig16_vol_estimators.pdf)
 
@@ -395,10 +410,10 @@ drift-independent: at a deliberately extreme 2%/day drift, Parkinson is biased
 $+37.0\%$ and Garman–Klass $+13.3\%$, while Rogers–Satchell moves $+0.0\%$
 (V-09).
 
-## 1.3 What the findings say about the report as a whole
+## 1.3 What the findings establish
 
-Eighty-one of ninety-three substantive claims verified exactly as written,
-including every piece of machinery the report identifies as highest-priority:
+After the corrections, eighty-four of ninety-three substantive claims pass.
+The tests support the core pieces of the verification design:
 
 - The **False Strategy Theorem** closed form matches direct Monte Carlo to
   better than 1% for all $N\geq100$, and the headline figure the report quotes
@@ -415,41 +430,42 @@ including every piece of machinery the report identifies as highest-priority:
 - **PSR** is a properly calibrated probability (Kolmogorov–Smirnov $p=0.97$
   against uniformity under the null).
 
-The errors that were found cluster in a recognisable place: they are all
-**inversions of a discrete recursion or a cost model** — the OU half-life, the
-no-trade region, and (in the caveats) the $\kappa$ approximation and the
-kurtosis convention. This is the class of error that survives code review,
-passes type checks, produces no exception, and shows up only as money.
+The corrected defects share a pattern. They came from inverting a discrete
+recursion or interpreting a cost model: the OU half-life, the no-trade region,
+the $\kappa$ approximation, and the kurtosis convention. These errors survive
+type checks and ordinary code review. They produce numbers that look normal.
+Their consequence appears later, in a position size, a turnover bill, or a
+promotion decision.
 
-That is a specific and actionable lesson for the build, and it is the strongest
-possible argument for the report's own recommendation in Section 6.2: transplant
-verification engineering. The defects found here are exactly the defects that
-scoreboards, property-based invariants, and differential testing against an
-independent implementation are designed to catch.
+The practical response is to test the surrounding property as well as the
+formula's happy path. An independent implementation, a round-trip test, a null
+calibration, or a causal recomputation can expose a defect that a single
+example never will. That is the role verification engineering plays in the
+system proposed here.
 
 \clearpage
 
-# Part II — The expanded report
+# Part II — The system and the research method
 
-The remainder of this document is the original report, preserved in structure,
-with the verification results integrated at the point of each claim and figures
-added throughout.
+The rest of the paper describes the choices around the research slice: which
+models can help build it, which mathematical tools it needs, where the data
+and execution boundaries sit, and how the system should fail. The verification
+results are placed next to the claims they test. The figures show the parts of
+the design that are easier to inspect than to describe.
 
 # 1. Alternative and Cheaper Models
 
-## 1.1 The strategic distinction that governs everything
+## 1.1 Hosted models and local weights are different decisions
 
-There is a categorical difference between **calling a Chinese-hosted API** and
-**running Chinese open weights locally**. Open weights (DeepSeek, Qwen, GLM and
-Kimi are all downloadable under permissive licences) run fully offline; no
-prompt or code ever leaves the machine. A hosted endpoint at `api.deepseek.com`
-or Alibaba's DashScope sends prompts to servers in China subject to PIPL and
-local law.
+Calling a Chinese-hosted API and running Chinese open weights locally are
+different choices. Local weights can run offline, so strategy code and private
+data stay on the machine. A hosted endpoint sends the prompt to a provider's
+servers and puts the data under that provider's terms and local law.
 
-\begin{keybox}{The governing rule for this project}
-Hosted cheap APIs are fine for generic and public coding. Anything containing
-strategy logic, signals, or private data runs on self-hosted weights or a
-trusted Western host.
+\begin{keybox}{The rule for this project}
+Use inexpensive hosted APIs for generic or public coding. Keep strategy logic,
+signals, and private data on self-hosted weights or with a host that has been
+approved for that data.
 \end{keybox}
 
 ## 1.2 Chinese frontier and open model families
@@ -488,11 +504,11 @@ All three quarterly-to-monthly conversions are exact. Minor, but these are the
 figures the Section 1.8 budget table is built on.
 \end{verified}
 
-\begin{finding}{A-01 --- the cache-discount claim is inconsistent with this table}
-Section 6.7's "\textasciitilde{}90--98\%-cheaper cache rate on
-DeepSeek/GLM/Kimi" holds only for DeepSeek (98\% and 99\%). Computed from the
-table above, GLM and Kimi cache hits are 75--90\% cheaper. See Part~I.
-\end{finding}
+\begin{verified}{A-01 --- cache-discount ranges verified}
+Computed from the table above, DeepSeek cache hits are 98--99\% cheaper and
+GLM/Kimi cache hits are 75--90\% cheaper. A-01 recomputes the rounded endpoints
+and passes. See Part~I.
+\end{verified}
 
 ## 1.3 Western open-weight alternatives
 
@@ -629,9 +645,11 @@ recommends both but attributes them to the wrong cost driver.
 
 # 2. Mathematical Models
 
-All equations are stated for typesetting; symbols are defined inline;
-assumptions and failure modes are flagged. **Every equation in this section has
-been independently verified**; the result is recorded inline.
+This section collects the mathematical components the eventual strategy slice
+will need: signals, volatility, sizing, portfolio construction, risk, costs,
+execution, and validation. Each formula is written with its assumptions. The
+verification result is recorded beside it, including cases where a textbook
+formula is correct only for an idealised process.
 
 ## 2.1 Momentum signals
 
@@ -723,6 +741,41 @@ Empirically this raises the Sharpe ratio and cuts drawdown by de-risking in
 high-volatility regimes; it adds turnover; and the volatility estimate lags
 jumps.
 
+\begin{caveat}{The evidence for volatility management is contested --- and this
+report previously presented only one side}
+Earlier drafts of this section asserted the benefit without citing the
+literature that disputes it. That is the same failure §4.7 criticises in
+others, so it is corrected here.
+
+\textbf{For:} Moreira \& Muir (2017), \emph{Journal of Finance} 72(4):1611--1644,
+find that scaling exposure by inverse realised variance produces significantly
+positive alphas across equity factors.
+
+\textbf{Against:} Cederburg, O'Doherty, Wang \& Yan (2020), \emph{Journal of
+Financial Economics} 138(1):95--117, examine 103 equity strategies and conclude
+that volatility-managed portfolios \textbf{do not systematically outperform
+their unmanaged counterparts in direct comparison}. Their central objection is
+methodological and lands squarely on this report's own concerns: the positive
+alphas come from \emph{spanning regressions} whose implied trading strategies
+are \textbf{not implementable in real time}, and reasonable out-of-sample
+versions generally earn \emph{lower} certainty-equivalent returns and Sharpe
+ratios than simply holding the unmanaged portfolio.
+
+That is the same defect class as G-01. A spanning regression estimated over the
+full sample uses future information to set the scaling, exactly as smoothed
+state probabilities do. The in-sample result is real; the tradeable result is
+not the same number.
+
+Consequences for this project. First, volatility targeting must be treated as a
+\textbf{hypothesis to be tested}, not a technique to be applied --- and the
+strongest published evidence says it will probably fail. Second, any
+pre-registration of a volatility-managed strategy must name Cederburg et al. as
+the falsifying prior and must specify a strictly causal scaling rule with a
+real-time-implementable estimator. Third, the correct baseline is the
+\emph{unmanaged} portfolio at matched ex-post volatility, which is the
+comparison that paper shows is usually lost.
+\end{caveat}
+
 \begin{verified}{K-01 --- verified}
 With $\sigma$ known, $w=\sigma^*/\sigma$ delivers realised volatility equal to
 the target to within 0.1\%.
@@ -790,10 +843,11 @@ to $\Pi$; certain views satisfy $P\,E[R]=Q$ exactly. The report states the
 formula but none of its limits, which are what a reviewer checks first.
 \end{verified}
 
-\begin{finding}{P-13 --- quadratic costs do NOT give a no-trade region}
-Detailed in Part~I. The closed form is right; the no-trade region requires L1
-costs.
-\end{finding}
+\begin{verified}{P-13 --- corrected and verified}
+Quadratic costs give smooth partial adjustment, not a no-trade region. A
+no-trade region requires proportional/L1 costs (or an explicit separate band).
+P-13 verifies both behaviours across a sweep away from the frictionless target.
+\end{verified}
 
 **How badly does mean-variance error-maximise?** With 20 assets and five years
 of daily data — more than most retail backtests have clean — the unconstrained
@@ -1285,18 +1339,20 @@ free parameter for the trial registry to count.
 | Tradier | yes | equities/options | REST | good options; smaller ecosystem |
 | TradeStation | yes | multi-asset | REST | approval friction |
 | Schwab (thinkorswim) | yes | equities/options | OAuth | post-TDA migration; slow approval |
-| Coinbase/Kraken/Binance | crypto | crypto | varies | 24/7, no PDT |
-| Tradovate/Rithmic/CQG | some sims | futures | varies | pro-grade; pair with Databento |
+| Coinbase / Kraken / Binance | crypto | crypto | varies | 24/7, no PDT |
+| Tradovate / Rithmic / CQG | some sims | futures | varies | pro-grade; pair with Databento |
 
-**Recommendation:** **Alpaca paper** for Stage 6 — best developer experience,
-true paper environment, Python and Go SDKs. Add an **IBKR paper** adapter behind
-a provider-neutral interface for fidelity and breadth.
+**Decision:** use **IBKR Pro Tiered paper** for Stage 6 behind a
+provider-neutral adapter. At the selected \$2,000--\$2,500 capital band, the
+\$0.35 whole-share order minimum, pass-through fees, fractional-share rules,
+cash-interest threshold, and margin financing are material model inputs rather
+than implementation details.
 
 ## 3.2 Market-data vendors
 
 | Vendor | Strength | ~Cost 2026 | PIT / survivorship |
 |---|---|---|---|
-| Polygon.io | flat-rate SIP real-time + historical | Stocks Advanced ~\$199/mo | 7+ yr; SIP-sourced |
+| Polygon.io / Massive | raw OHLCV plus separately dated dividend actions | Starter \$29/mo (5 yr); Developer \$79 (10 yr); Advanced \$199 (all available) | daily archive starts 2003-09-10; dividend declaration/ex/record/pay dates |
 | Databento | institutional tick/L2, direct feeds, ns timestamps | metered ~\$100–500/mo | best microstructure |
 | Alpaca data | free IEX / paid SIP | free / \$99 | partial free volume |
 | Tiingo | EOD + fundamentals + news | ~\$10–50/mo | good value |
@@ -1307,10 +1363,19 @@ a provider-neutral interface for fidelity and breadth.
 | SEC EDGAR | filings/fundamentals | free | filing timestamps = natural PIT |
 | ORATS / OptionMetrics / CBOE | options and IV surfaces | institutional | OptionMetrics = academic standard |
 
-**Point-in-time data is make-or-break for Stage 2.** Use **ALFRED** for macro
-vintages, **EDGAR filing timestamps** for fundamentals availability, and
-**Norgate or CRSP** for survivorship-bias-free price universes. **yfinance is
-prototyping-only** — non-commercial terms, unofficial, rate-limited, and not
+**Point-in-time data is make-or-break for Stage 2.** For Slice 01 use
+**Polygon/Massive** corporate actions and raw (`adjusted=false`) OHLCV, plus
+**ALFRED** with explicit vintage parameters for macro and financing inputs.
+Massive Starter is sufficient for schema development but cannot cover the full
+primary evaluation. The CIO fixed the primary sample to 2003-09-10 through
+2026-08-11: one post-decimalization vendor and one cost regime, with no splice.
+The 1993--2003 period is reserved for a separately licensed, separately frozen,
+one-time earlier-regime robustness analysis and is never pooled. Resolve
+Massive non-display/backtest, historical-NBBO, and immutable-storage permission
+in writing before freezing M1. Use
+**EDGAR filing timestamps** for later fundamentals work and **Norgate or CRSP**
+for later survivorship-bias-free price universes. **yfinance is
+prototyping-only** — personal-use terms, unofficial, rate-limited, and not
 point-in-time.
 
 ## 3.3 Backtest and research frameworks: build versus adopt
@@ -1325,22 +1390,20 @@ point-in-time.
 | Backtesting.py / bt / PyBroker | light | varies | bt good for allocation/rebalance |
 | Qlib / FinRL / Lumibot / Hummingbot | ML/RL/crypto | varies | niche |
 
-**Recommendation — this directly answers the Stage 3 question.** **Adopt
-Nautilus Trader as the execution and backtest engine.** Its Rust core,
-event-driven order state machines, and genuine backtest/live parity address
-exactly the backtest-to-live divergence risk the plan worries about, and its
-correctness-first design philosophy matches the verification instincts this
-report recommends elsewhere. Keep VectorBT upstream for fast signal triage.
+**Recommendation.** Adopt Nautilus Trader as the execution and backtest
+engine. Its Rust core, event-driven order state machines, and backtest/live
+parity address the main engine risk in this plan. Keep VectorBT upstream for
+fast signal triage.
 
 **Keep hand-rolling the point-in-time data layer (Stage 2) and the
 statistical-validation layer (Stage 5)** — those are the differentiators and no
 framework does them well. This is a "borrow the engine, own the science" split.
 
-The verification results reinforce this split. The engine-side mathematics
-(Almgren–Chriss, order state machines) verified cleanly and is well-served by a
-mature library. The science-side mathematics is where all three errors and most
-of the caveats were found — which is precisely the part worth owning, testing,
-and understanding completely.
+The verification results support this split. The engine-side mathematics
+(Almgren--Chriss and the order state machines) verified cleanly and is a good
+candidate for a mature library. The science-side mathematics is where the three
+errors and most caveats appeared. That is the part to own, test, and understand
+completely.
 
 ## 3.4 Data and compute infrastructure
 
@@ -1411,32 +1474,251 @@ itself must be confirmed with FINRA and your broker.
 
 \clearpage
 
+## 3.7 Minimum viable capital
+
+Sections 3.1 and 3.2 chose a broker and a data vendor. This section asks what
+those choices cost, and how much capital is needed before an edge survives them.
+
+The question matters because a strategy can have a genuine, statistically real
+edge and still lose money. Fixed costs do not scale with capital, so below some
+account size the data subscription alone consumes the entire expected return.
+That size is the **minimum viable capital**.
+
+### The framework
+
+Let $C$ be capital, $SR$ the expected Sharpe ratio of *excess* returns, and
+$\sigma$ the target annualised volatility. Write $e$ for the fund expense ratio,
+$\tau$ for annual one-way turnover as a fraction of capital, $s_{1/2}$ for the
+half-spread paid per unit of traded notional, and $F$ for annual fixed costs:
+
+$$\text{net expected profit}(C) = C\,(SR\,\sigma - e - \tau s_{1/2}) - F$$
+
+Setting this to zero gives the break-even capital:
+
+$$\text{MVC} = \frac{F}{SR\,\sigma - e - \tau s_{1/2}}$$
+
+Check **MVC-02** confirms the algebra against a bisection solve. The formula's
+*shape* is the finding. $SR$ sits in the denominator, so MVC is hyperbolic in
+Sharpe: halving the expected Sharpe doubles the capital required. $F$ sits in
+the numerator, so the capital floor is linear in recurring cost — and recurring
+cost is chosen before any research begins.
+
+At a Sharpe of 0.5 and a 12.5% volatility target, **every \$1/month of recurring
+cost adds about \$193 to the capital needed to break even** (MVC-03). A
+\$99/month market-data plan therefore carries a \$19,000 capital prerequisite.
+That is the number to put in front of any subscription decision.
+
+### Provider pricing
+
+Read from vendor pricing pages on 21 August 2026, individual / non-professional
+tiers. Pricing is dated and must be re-verified before use.
+
+| Provider | Tier | \$/mo | EOD history | Quote data | Note |
+|---|---|---:|---:|:---:|---|
+| Massive (ex-Polygon) | Basic | 0 | 2 yr | — | 5 API calls/min |
+| Massive | Starter | 29 | 5 yr | — | 15-min delayed |
+| Massive | Developer | 79 | 10 yr | — | adds trades |
+| Massive | Advanced | 199 | 20+ yr | yes | real-time; non-pro only |
+| Massive | NYSE imbalances | 49 | — | — | auction order imbalances |
+| **Tiingo** | **Starter** | **0** | **30+ yr** | — | 500 symbols/mo, 1k req/day |
+| **Tiingo** | **Power** | **30** | **30+ yr** | — | 100k req/day, 40 GB/mo |
+| Alpaca | Free | 0 | 7 yr | — | IEX only, 200 calls/min |
+| Alpaca | Algo Trader Plus | 99 | 7 yr | yes | full SIP |
+| Hetzner | CX22-class VPS | 6 | — | — | always-on host |
+
+The single most consequential fact for a small account: **Tiingo's free tier
+carries 30+ years of end-of-day history**, and its \$30/mo tier lifts the rate
+limits without changing the history. Massive's 20+ year archive costs \$199/mo
+because it is bundled with real-time and quote data, and a daily-frequency
+strategy needs neither.
+
+Quote data is required only to calibrate the spread term of the cost model.
+That is a one-off measurement, not a subscription: buy one month, calibrate,
+cancel. Treating it as recurring would raise the capital floor by roughly
+\$38,000.
+
+Note also that both Tiingo tiers are licensed **internal use only**, and
+Massive's Advanced tier is non-professional only. Those terms, not the price,
+are the binding constraint if the work is ever shared or commercialised.
+
+### The capital ladder
+
+![](figures/fig21_mvc.pdf)
+
+Minimum viable capital by cost stack and Sharpe expectation (MVC-04), at a
+12.5% volatility target on a 2 bp expense ratio and 200% annual turnover:
+
+| Cost stack | \$/yr | $SR{=}0.8$ | $SR{=}0.5$ | $SR{=}0.3$ | $SR{=}0.2$ |
+|---|---:|---:|---:|---:|---:|
+| Tiingo Starter + laptop | 0 | — | — | — | — |
+| Tiingo Power + laptop | 360 | \$3,600 | \$5,800 | \$9,700 | \$14,600 |
+| Tiingo Power + VPS | 432 | \$4,300 | \$6,900 | \$11,600 | \$17,500 |
+| Massive Advanced + VPS | 2,460 | \$24,700 | \$39,600 | \$66,200 | \$99,700 |
+| Massive Adv + Alpaca Plus + VPS | 3,648 | \$36,600 | \$58,700 | \$98,100 | \$147,900 |
+
+Nothing about the strategy changes between the second row and the fifth. Only
+the subscription decision does, and it moves the capital floor by an order of
+magnitude. Across the 0.3–0.8 Sharpe range section 4.8 calls realistic for a
+solo operator, a lean stack implies a floor near \$3,600–\$9,700; the full
+real-time stack implies \$36,600–\$98,100.
+
+### Taxes, and why the account wrapper matters
+
+The framework above omits tax, and the omission is not small. At ~200% annual
+turnover essentially all gains are **short-term**, taxed as ordinary income.
+Worse, for an individual without trader status the data subscription is **not
+deductible** — the Tax Cuts and Jobs Act suspended miscellaneous itemized
+deductions — so the fixed cost is paid with after-tax dollars while the profit
+is taxed. After-tax profit is $(1-t)\,C\,r - F$, so the floor scales exactly
+(MVC-09) as:
+
+$$\text{MVC}_{\text{tax}} = \frac{\text{MVC}}{1-t}$$
+
+| Blended short-term rate | MVC (lean stack, $SR{=}0.5$) | vs untaxed |
+|---:|---:|---:|
+| 0% | \$5,790 | — |
+| 15% | \$6,812 | +18% |
+| 24% | \$7,619 | +32% |
+| **30%** | **\$8,272** | **+43%** |
+| 37% | \$9,191 | +59% |
+
+The practical consequence is a recommendation this report did not previously
+make: **hold a strategy like this in a Roth IRA.** A high-turnover, long-only,
+unlevered strategy is close to the ideal case for a tax-sheltered wrapper, where
+$t=0$ and the drag disappears entirely. The usual objections — contribution
+limits and restricted withdrawals — are nearly irrelevant at this account size,
+for capital that is not needed back. *Nothing here is tax advice; confirm
+treatment with a qualified professional.*
+
+### MVC is an interval, not a number
+
+The tables above report MVC at assumed point values of $SR$. That is precisely
+the error check **S-14** identifies for PBO: reporting a statistic whose
+sampling error dominates it. The correction matters more here than there,
+because $\text{MVC}\propto 1/SR$ — the uncertainty in the Sharpe is *amplified*
+rather than damped.
+
+Propagating the Lo (2002) standard error through the formula (MVC-11), at
+$\widehat{SR}=0.5$ on the lean stack with 30% tax:
+
+| Sample length | 95% CI on $SR$ | 95% interval for MVC |
+|---|---|---|
+| 3 years | $[-0.63, +1.63]$ | \$2,525 — **unbounded** |
+| 5 years | $[-0.38, +1.38]$ | \$2,994 — **unbounded** |
+| 10 years | $[-0.12, +1.12]$ | \$3,682 — **unbounded** |
+| 20 years | $[+0.06, +0.94]$ | \$4,397 — \$68,000 |
+
+**With ten years of daily data the Sharpe interval still contains zero, so the
+capital floor has no finite upper bound.** No amount of capital is provably
+sufficient. Only at roughly twenty years does the interval close.
+
+Two readings follow. The point values in the ladder above remain useful as a
+*ranking* of cost stacks against each other — which is what they are actually
+for — but they must not be read as a capital requirement. And the operationally
+useful number is the **lower** bound: even at the optimistic end of a ten-year
+Sharpe interval the floor is \$3,682, which already exceeds the \$3,000
+starting capital.
+
+### The verdict at \$3,000
+
+At \$3,000 with a Sharpe of 0.5 and a 12.5% volatility target, expected gross
+excess return is **\$188/year**. Against that (MVC-05):
+
+| Cost stack | Fixed \$/yr | Net \$/yr (untaxed) | Net \$/yr (after 30% tax) |
+|---|---:|---:|---:|
+| Tiingo Starter + laptop | 0 | **+187** | **+131** |
+| Tiingo Power + laptop | 360 | −173 | −229 |
+| Tiingo Power + VPS | 432 | −245 | −301 |
+| Massive Advanced + VPS | 2,460 | −2,273 | −2,329 |
+
+A \$30/month data plan costs \$360/year — roughly double the entire expected
+return. The account loses money in expectation *even if the edge is completely
+real*.
+
+This is the central practical finding of the section. At small capital the
+binding constraint is not the market, the broker, or the strategy. It is the
+vendor invoice. The only configuration that survives at \$3,000 is free data on
+existing hardware, which for a single-ETF daily strategy is genuinely
+sufficient. Commission is not the issue once the broker is zero-commission; the
+recurring fixed cost is.
+
+### A second floor: share granularity
+
+Costs are not the only constraint. Volatility targeting requires continuously
+adjustable exposure, and whole shares quantise it (MVC-06):
+
+| Capital | Shares of SPLG at \$78 | One share as % of book | Vol tracking error |
+|---:|---:|---:|---:|
+| \$1,000 | 12 | 7.8% | 0.34% |
+| \$3,000 | 38 | 2.6% | 0.11% |
+| \$10,000 | 128 | 0.8% | 0.03% |
+
+Instrument choice does most of the work here. SPLG at \$78 clears a 10%-of-target
+threshold at \$3,000, whereas an S&P 500 ETF priced near \$600 would leave five
+shares and a 0.87% volatility tracking error — a 7% relative miss on the exact
+quantity the strategy exists to control. Reliable fractional-share support
+removes this floor entirely, which is a concrete reason to verify fractional
+order handling before committing to an instrument.
+
+### Capital and cost by build phase
+
+| Phase | Trading capital | Recurring \$/yr | Note |
+|---|---:|---:|---|
+| M0 governance | 0 | 0 | registry, contracts, CI |
+| M1 slice research | 0 | 559 | includes one month of quote data |
+| M2 hardening | 0 | 360 | no new data requirement |
+| M3 sleeves 2–3 | 0 | 360 | same universe scope |
+| M4 allocation | 0 | 360 | no new data requirement |
+| M5 paper portfolio | 0 | 432 | always-on host for reconciliation |
+| M6 live minimum | 3,000 | 432 | sized to measure execution |
+| M7 scale | above MVC | 432 | capital above MVC for achieved Sharpe |
+
+Milestones M0 through M5 require **no trading capital at all** — only the
+recurring cost (MVC-07). That is the scheduling insight hiding in the
+arithmetic: the capital constraint does not bind until M6, roughly six to nine
+months into the build, so capital accumulation and platform construction can run
+in parallel.
+
+### What MVC does not answer
+
+Clearing the MVC bar makes a strategy economically viable. It does not make the
+result measurable. At \$3,000 the expected annual profit is \$188 against a
+\$375 standard deviation — the noise is twice the signal — and reaching a
+$t$-statistic of 2 on live P&L would take **16 years** at a true Sharpe of 0.5
+(MVC-08). Scaling capital scales expectation and dispersion identically, so no
+amount of capital makes live P&L informative faster.
+
+This is check S-11 arriving from a different direction, and it is why milestone
+M6 is defined as validating the cost model and the execution path rather than
+the edge. MVC answers *will this lose money by construction?* It does not answer
+*does the edge exist?*, and the two questions should never be conflated in a
+promotion decision.
+
+\clearpage
+
 # 4. Risk
 
 ## 4.1 Model risk management adapted from SR 11-7
 
-The Fed/OCC **SR 11-7** guidance adapts cleanly. Pillars: **model definition**
-(any quantitative method turning inputs into estimates — signals, cost models,
-and any ML all qualify), **three lines of defence**, **effective challenge**
-(critical review by a competent, independent party), a **model inventory**,
-**validation** (conceptual soundness, outcomes analysis, ongoing monitoring),
-and **documentation**.
+The Fed/OCC **SR 11-7** guidance provides a useful structure even for a solo
+operator. The relevant pieces are model definition, independent challenge,
+inventory, validation, monitoring, and documentation. A signal, cost model, or
+machine-learning component is a model when it turns inputs into an estimate.
 
-**Solo-operator mapping:** first line = Codex (implementer) plus you as author;
-**second line = Claude Code as independent adversarial validator** — literally
-"effective challenge", and the existing "writer $\neq$ sole reviewer" rule is
-SR 11-7's independence principle; third line = CI, a periodic Stage 9
-self-audit, and the promotion state-machine gate.
+For this project, the first line is the implementer and author. The second line
+is an independent adversarial review, preferably using a different model and a
+different implementation path. The third line is CI, periodic self-audit, and
+the promotion state machine.
 
 ![](figures/fig11_three_lines.pdf)
 
 Maintain a model inventory (each strategy, its assumptions, limitations, and
 validation date) and a revalidation cadence.
 
-**This report is itself an instance of the pattern.** The verification suite is
-second-line effective challenge applied to the report's own mathematics, and it
-found three errors that first-line review did not. That is the argument for the
-practice, made empirically rather than by assertion.
+This report follows the same pattern. Its verification suite acts as a second
+review of the mathematics and found three errors that first-line review had
+missed. The result is a concrete reason to keep the review boundary in the
+system.
 
 ## 4.2 Risk taxonomy
 
@@ -1576,19 +1858,19 @@ it becomes a drawdown.
 |---|---|---|---|---|
 | Daily / EOD | 1/day | **seconds–minutes** | Python, REST, cron | **YES — this is you** |
 | Intraday / swing | min–hr | sub-second–seconds | WebSocket, async | maybe later |
-| High-frequency | ms–μs | microseconds | C++/Rust, kernel bypass, colo | no |
-| Ultra-low-latency | μs–ns | **nanoseconds** | **FPGA/ASIC**, colo, microwave | career only |
+| High-frequency | ms--$\mu$s | microseconds | C++/Rust, kernel bypass, colo | no |
+| Ultra-low-latency | $\mu$s--ns | **nanoseconds** | **FPGA/ASIC**, colo, microwave | career only |
 
 ## 5.2 Where latency comes from
 
-Feed handler and decoding, network propagation (**~5 μs/km in fibre**), NIC and
+Feed handler and decoding, network propagation (**~5 $\mu$s/km in fibre**), NIC and
 kernel network stack, OS scheduling jitter, GC and interpreter overhead,
 serialisation, database writes, broker-side latency.
 
 \begin{verified}{A-04 --- verified}
 Speed of light divided by the group index of single-mode fibre ($n=1.4675$)
-gives \textbf{4.90 μs/km}. The report's rounding is correct and standard. For
-reference the vacuum figure is 3.34 μs/km, which is why hollow-core fibre and
+gives \textbf{4.90 $\mu$s/km}. The report's rounding is correct and standard. For
+reference the vacuum figure is 3.34 $\mu$s/km, which is why hollow-core fibre and
 microwave links --- both closer to $c$ --- are worth their cost to HFT firms.
 \end{verified}
 
@@ -1596,7 +1878,7 @@ microwave links --- both closer to $c$ --- are worth their cost to HFT firms.
 
 - Retail **REST round-trip: tens to hundreds of ms**; WebSocket streaming lower
   but still ms.
-- Kernel-bypass software (Solarflare X2522 + OpenOnload): **~just under 2 μs**
+- Kernel-bypass software (Solarflare X2522 + OpenOnload): **~just under 2 $\mu$s**
   tick-to-trade.
 - **FPGA tick-to-trade: 100–500 ns end-to-end**; the best firms reach
   single-to-double-digit ns; AMD Alveo **UL3524 delivers <3 ns transceiver
@@ -1683,7 +1965,13 @@ not latency at all — it is a regulatory boundary measured in minutes.
 
 \clearpage
 
-# 6. New Suggestions and Ideas
+# 6. Extensions and next work
+
+The platform is only useful if it moves toward a falsifiable research result.
+The additions in this section are therefore engineering work with a direct
+connection to that goal: tests that block silent errors, missing lifecycle
+stages, candidate strategy sleeves, and a way to present the project without
+turning a verified platform into a claim of profitability.
 
 ## 6.1 Agentic development workflow upgrades
 
@@ -1735,13 +2023,11 @@ is the generator), **assertions** (runtime invariant checks = SVA),
 **scoreboards** (an independent model predicts expected P&L and positions and
 checks against actual), and **formal property verification** (TLA+/Alloy).
 
-**Framing this explicitly — "I applied silicon-verification rigour to a trading
-system" — is exactly what a verification-hiring manager wants to see.**
-
-This report is the demonstration. The verification suite is a scoreboard: an
-independent implementation of every formula, checked against the claimed one. It
-found three errors in a document that had already been reviewed. That is the
-argument, and it is now evidence rather than assertion.
+The useful claim here is concrete: verification ideas from hardware work well
+when translated into independent reference models, coverage, assertions, and
+state-machine checks. This report is one example. Its suite reimplemented the
+formulas independently and found three errors in a document that had already
+been reviewed.
 
 ## 6.3 CI/CD and supply chain
 
@@ -1826,11 +2112,12 @@ spread has a genuine stationary scale to normalise by, which a non-cointegrated
 pair does not.
 \end{verified}
 
-\begin{finding}{M-04 --- the half-life estimator is biased}
-Use $-\ln 2/\ln(1+\lambda)$, not $-\ln 2/\lambda$. Detailed in Part~I. The error
-is always in the direction of "too long", and reaches $+58\%$ on fast-reverting
-pairs.
-\end{finding}
+\begin{verified}{M-03, M-04 --- exact half-life inversion verified}
+For unit spacing use $-\ln 2/\ln(1+\lambda)$, not the Euler approximation
+$-\ln 2/\lambda$; for general spacing multiply the numerator by $\Delta t$.
+The exact inversion recovers simulated OU half-lives, while M-04 verifies that
+the discarded approximation is always too long and worsens with reversion speed.
+\end{verified}
 
 **Signal:** $z_t=(Z_t-\text{mean}(Z))/\text{std}(Z)$ on spread
 $Z_t=Y_t-\beta X_t$; illustrative entry at $|z|\approx2$, exit toward 0, stop
@@ -1850,22 +2137,19 @@ estimated, and which are exactly the kind of free parameter §2.8's trial
 registry needs to count.
 \end{verified}
 
-## 6.6 Career and portfolio artifact strategy
+## 6.6 How to present the work
 
-- **Open-source** (build reputation, no alpha leak): the deterministic
-  backtester harness, the PIT data-layer design, the property-based and formal
-  testing of the order state machine, the DSR/PBO validation library, and
-  **Aegis-Stream**. **And this verification suite**, which is a stronger
-  artefact than any of them: it is a complete, reproducible demonstration of
-  finding real errors in real quantitative mathematics.
-- **Keep private:** any actual profitable signal, parameters, and live results.
-- **Interview framing:** lead with the **verification story** (SVA $\to$
-  Hypothesis, scoreboards, TLA+ model-checking of exactly-once) and the
-  **overfitting-control story** (DSR/PBO, purged CV). **Impresses:** "I assumed
-  my backtest was lying and built the machinery to prove it"; "I model-checked
-  the order state machine in TLA+"; "I re-derived every formula in my own design
-  document and found three errors." **Reads as naive:** a shiny Sharpe-4 equity
-  curve with no deflation, no cost model, and no PIT discipline.
+The public part of the project can include the deterministic backtester,
+point-in-time data-layer design, property-based and formal tests for the order
+state machine, the DSR/PBO validation library, Aegis-Stream, and this
+verification suite. Keep any real signal, parameter set, and live result
+private until the data and disclosure risks are understood.
+
+When the work is shown to someone else, lead with the engineering evidence:
+what was specified, what was tested independently, which errors were found,
+and how the promotion gate handles an attractive but unreliable backtest. A
+high Sharpe ratio without that record is a result to investigate, not a result
+to present as proof.
 
 ## 6.7 Cost control for agentic development
 
@@ -1875,11 +2159,12 @@ registry needs to count.
 free/flash tiers, hard reasoning to frontier), and off-peak scheduling before
 DeepSeek's announced peak surcharge lands.
 
-\begin{finding}{A-01 --- correct the cache-discount figure}
-"\textasciitilde{}90--98\%" holds for DeepSeek only. State it as "up to
-\textasciitilde{}98\% on DeepSeek, \textasciitilde{}75--90\% on GLM and Kimi".
-Detailed in Part~I.
-\end{finding}
+\begin{verified}{A-01 --- provider-specific cache discounts verified}
+At the prices in Section 1.2, cache-hit input is
+\textasciitilde{}98--99\% cheaper on DeepSeek and
+\textasciitilde{}75--90\% cheaper on GLM/Kimi. A-01 recomputes these ranges
+from the table.
+\end{verified}
 
 \begin{caveat}{A-03 --- and route the optimisation to the right cost driver}
 On cheap flash tiers input cost dominates, so context hygiene and caching are
@@ -1893,79 +2178,63 @@ Detailed in §1.8.
 
 ![](figures/fig09_architecture.pdf)
 
-The architecture diagram makes explicit the boundary that governs the whole
-design: **agentic tooling writes the system, but never runs inside it.**
-Everything in the deterministic region is reproducible from a seed. Agents
-operate only at development time, behind a review gate.
+The diagram shows the boundary that governs the design: **agentic tooling writes
+the system, but never runs inside it.** Everything in the deterministic region
+is reproducible from a seed. Agents operate during development, behind review
+and CI.
 
-This is the structural answer to the AI-agent risk taxonomy in §4.2. Prompt
-injection, hallucinated logic and silent scope creep are all development-time
-risks under this design, where they are caught by review and CI, rather than
-runtime risks, where they would be caught by losing money.
+That boundary keeps prompt injection, hallucinated logic, and scope changes in
+the development process, where they can be reviewed. None should be allowed to
+become a runtime decision that is discovered after a loss.
 
 \clearpage
 
-# 8. Bottom line and staged recommendations
+# 8. What to build next
 
-The architecture is sound, and the verification exercise strengthens rather than
-weakens that conclusion: 81 of 93 substantive claims verified as written, and
-every piece of machinery the report identifies as highest-priority survived
-testing.
+The evidence supports a limited conclusion. The platform design is coherent,
+and the verification suite found three mistakes that would have survived an
+ordinary review. That makes the research process safer. It does not show that
+any strategy has a positive expected return.
 
-**Stage now (design-time decisions):**
+The next milestone should therefore be one empirical vertical slice, not a
+larger survey. Freeze a liquid universe and a data source. State why the signal
+could exist. Compare it with a simple baseline. Then evaluate it with
+point-in-time data, purged walk-forward splits, realistic costs and borrow, and
+a paper-trading period long enough to measure the gap between the simulation
+and the broker.
 
-1. **Adopt Nautilus Trader** for the execution and backtest core — its Rust-core
-   order state machines and true backtest/live parity retire the biggest engine
-   risk — while **keeping the PIT-data (Stage 2) and statistical-validation
-   (Stage 5) layers hand-rolled** as differentiators. The verification results
-   support this split precisely: the engine-side mathematics verified cleanly,
-   and every error found was on the science side.
-2. **Set up the model-routing rig** (claude-code-router / LiteLLM): bulk
-   implementation to DeepSeek V4 Flash / Qwen3-Coder / a GLM coding plan;
-   adversarial review to a *different* vendor from the implementer;
-   **self-host Qwen3-30B-A3B** for any runtime research agents so no strategy
-   data ever egresses.
+Until that result exists, the build priorities are:
 
-**Stage next (build-time):**
+1. **Use Nautilus Trader for the execution and backtest core.** Keep the
+   point-in-time data layer and the statistical-validation layer under direct
+   control. The engine-side tests passed cleanly; the errors were in the
+   research assumptions and formulas.
+2. **Put the model-routing boundary in place.** Use lower-cost hosted models
+   for generic code, a different model or vendor for adversarial review, and
+   self-hosted weights when prompts contain strategy data.
+3. **Finish the overfitting controls before searching for a signal.** Implement
+   DSR, PBO/CSCV, purged cross-validation with an embargo, and a trial registry.
+   Record abandoned configurations as well as the ones that look promising.
+4. **Build pre-trade limits, kill switches, and reconciliation as deterministic
+   state machines.** Persist the halt state outside process memory and recover
+   from unknown broker state before resuming.
+5. **Apply the corrected formulas and property tests.** Use an L1 cost model or
+   an explicit band for no-trade behaviour, the exact OU half-life inversion,
+   proper Engle--Granger critical values, non-excess kurtosis in PSR, and the
+   five tests in Section 6.1.
 
-3. **Over-invest in overfitting control** — implement DSR, PBO/CSCV,
-   purged-CV-with-embargo, and a trial registry *before* writing a single
-   "promising" strategy. Treat any net Sharpe above 1 after deflation as suspect
-   until proven in paper or live. Register **every** configuration evaluated,
-   including abandoned ones; an understated $N$ makes the deflation worthless
-   while appearing to work.
-4. **Build the pre-trade control, kill-switch and reconciliation layer
-   deterministically** (mirroring 15c3-5), with halt state persisted outside
-   process memory.
+Several conditions would change this plan. A move to intraday or sub-second
+trading would make latency and microstructure the next research problem. If
+development spend passes roughly $300 per month, more work should move to
+self-hosted weights and batch APIs. A live-versus-backtest tracking error
+breach or a CUSUM alarm should start the strategy-decommissioning process.
+Managing outside capital would introduce a separate legal and compliance
+question that requires professional advice before the scope changes.
 
-**Apply the corrections from Part I before building:**
-
-5. Use the L1 cost model (or an explicit band) for the no-trade region;
-   $-\ln 2/\ln(1+\lambda)$ for the OU half-life; Engle–Granger critical values
-   for cointegration screening; and non-excess kurtosis in PSR. Each is a
-   one-line change now and an invisible bug later.
-6. **Add the five property tests in §6.1.** They cover the entire class of
-   defect this exercise found.
-
-**Benchmarks and thresholds that would change these recommendations:**
-
-- If you move to **intraday or sub-second frequency**, revisit latency
-  (WebSocket plus async; colocation still irrelevant until true HFT) and the
-  microstructure mathematics in §2.10.
-- If **development token spend exceeds ~\$300/mo**, shift more work to
-  self-hosted Qwen3-30B-A3B and batch APIs.
-- If a strategy's **live-versus-backtest tracking error breaches its pre-set
-  band**, or its CUSUM chart alarms, trigger the Stage 5.5 decommissioning
-  process.
-- If you ever intend to **manage outside capital**, stop and get RIA/Series 65
-  (or CTA/Series 3) advice first — that crosses a bright regulatory line this
-  report does not.
-
-**And frame the whole thing — Aegis-Stream, the formal and property-based
-verification, and this verification suite — as a verification-engineering
-portfolio artefact.** That is where the comparative advantage over other
-quant-curious candidates actually lies, and this document is now the evidence
-for it.
+The project is strongest when it is described accurately: a verification-led
+research system designed to find out whether one hypothesis survives. That is
+already a useful artifact. The trading claim, if one ever follows, has to be
+earned by the data.
 
 \vspace{1em}
 \begin{center}\footnotesize\color{muted}
@@ -1978,17 +2247,18 @@ professional and with your employer's compliance function.}
 
 # Appendix A — Complete verification results
 
-All 104 checks, in the order they run. Reproduce with
+All 115 checks, in the order they run. Reproduce with
 `python3 verify/run_all.py`.
 
 \input{out/generated/table_full.tex}
 
 \clearpage
 
-# Appendix B — Detail for every finding and caveat
+# Appendix B — Detail for every remaining caveat
 
 Full method, expected value, measured value and recommendation for each of the
-three errors and nine caveats.
+nine caveats. The three corrected defects are documented in Part I and retained
+as passing regression checks in Appendix A.
 
 \input{out/generated/notes.tex}
 
@@ -2035,7 +2305,10 @@ Verification methods used, in order of strength:
 \begin{keybox}{Determinism}
 Master seed \texttt{20260811}. Every random stream in the suite is derived from
 it via \texttt{numpy.random.default\_rng([MASTER\_SEED, stream\_id])}, so
-streams are independent and reproducible. Re-running the suite reproduces every
-number in this document exactly. No verification figure in the prose is
-hardcoded --- all tables and counts are generated from the suite's JSON output.
+streams are independent and reproducible. With the pinned requirements, the
+reported rounded values reproduce; numerical-solver residuals may differ in
+their last bits across BLAS/platforms, and are checked with explicit tolerances.
+All verification tables and counts come from the suite's JSON output;
+explanatory prose repeats selected values and must be reviewed when a check
+changes.
 \end{keybox}

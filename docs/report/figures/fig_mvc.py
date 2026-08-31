@@ -15,8 +15,8 @@ from style import (setup, save, despine, note, style3d, INK, MUTED, GRID,
                    PANEL, BLUE, RED, GREEN, AMBER, PURPLE, TEAL, PINK,
                    SLATE)                                      # noqa: E402
 from v10_mvc import (PRICING, annual_fixed, net_rate, mvc, VOL_TARGET,
-                     SPLG_PRICE, SPLG_EXPENSE, TURNOVER,
-                     SPLG_HALF)                                # noqa: E402
+                     SPLG_PRICE, SPLG_EXPENSE, TURNOVER, SPLG_HALF,
+                     TAX_RATE, sr_standard_error)              # noqa: E402
 
 SEQ = LinearSegmentedColormap.from_list(
     "seq", ["#eef2ff", "#c7d6fb", "#8fb0f4", "#4d7fe8", "#2563eb", "#15379c"])
@@ -44,53 +44,69 @@ def fig_mvc():
         F = annual_fixed(*keys)
         if F == 0:
             continue
-        y = [mvc(F, s) for s in srs]
-        ax.semilogy(srs, y, color=col, lw=1.8,
+        ax.semilogy(srs, [mvc(F, s) for s in srs], color=col, lw=1.8,
                     label=f"{name}  (\\${F:,.0f}/yr)")
+        ax.semilogy(srs, [mvc(F, s, tax=TAX_RATE) for s in srs], color=col,
+                    lw=1.0, ls=(0, (2, 2)), alpha=0.75)
     ax.axhline(CAPITAL, color=INK, lw=1.3, ls=(0, (4, 3)))
     ax.text(0.175, CAPITAL * 1.30, "\\$3,000 starting capital", fontsize=7.0,
             color=INK, ha="left")
     ax.axvspan(0.3, 0.8, color=SLATE, alpha=0.08, lw=0)
-    ax.text(0.315, 2.2e4, "realistic solo Sharpe range (section 4.8)",
-            fontsize=6.6, color=MUTED, ha="center", va="center",
-            rotation=90)
+    ax.text(0.55, 6.0e5, "realistic solo Sharpe range (section 4.8)",
+            fontsize=6.5, color=MUTED, ha="center", va="center")
     ax.set_xlabel("expected Sharpe ratio (excess returns)")
     ax.set_ylabel("minimum viable capital  (log scale)")
     ax.set_title("(a) MVC is hyperbolic in Sharpe, linear in fixed cost")
     ax.set_xlim(0.15, 1.0)
     ax.set_ylim(1e3, 1e6)
-    ax.legend(loc="upper right", fontsize=6.6)
+    ax.legend(loc="upper right", fontsize=6.4)
     despine(ax)
-    note(ax, "curves below the dashed line are affordable at \\$3,000",
-         loc="lower center", fontsize=6.5)
+    note(ax, "solid = untaxed;  dotted = after 30% short-term tax\n"
+             "(tax raises every floor by 1/(1-t) = +43%)",
+         loc="lower center", fontsize=6.3)
 
-    # -------------------------------------------- (b) net P&L vs capital
+    # ------------------------------- (b) MVC is an interval, not a number
     ax = fig.add_subplot(gs[0, 1])
-    caps = np.logspace(3, 5.3, 400)
-    sr = 0.5
-    for name, keys, col in STACKS:
-        F = annual_fixed(*keys)
-        pnl = caps * net_rate(sr) - F
-        ax.plot(caps, pnl, color=col, lw=1.8)
-        be = mvc(F, sr)
-        if 1e3 < be < 2e5:
-            ax.plot([be], [0], "o", ms=5, color=col, mfc="white", mew=1.4,
-                    zorder=5)
-    ax.set_xscale("log")
-    ax.axhline(0, color=INK, lw=1.0)
-    ax.axvline(CAPITAL, color=INK, lw=1.3, ls=(0, (4, 3)))
-    ax.text(CAPITAL * 1.15, -7400, "\\$3,000", fontsize=7.0, color=INK)
-    ax.fill_between(caps, -8000, 0, color=RED, alpha=0.05, lw=0)
-    ax.text(1.05e3, -5400, "loses money in expectation\neven with a real edge",
-            fontsize=6.9, color=RED)
-    ax.set_xlabel("capital  (log scale)")
-    ax.set_ylabel("expected net annual P&L  (USD)")
-    ax.set_title(f"(b) Break-even points at Sharpe {sr}")
-    ax.set_ylim(-8000, 9000)
-    ax.set_xlim(1e3, 2e5)
+    F = annual_fixed("tiingo_power", "laptop")
+    sr_hat = 0.5
+    yrs = np.arange(2, 31)
+    lo_mvc, hi_mvc, inf_from = [], [], None
+    for y in yrs:
+        se = sr_standard_error(sr_hat, float(y))
+        sr_lo, sr_hi = sr_hat - 1.96 * se, sr_hat + 1.96 * se
+        lo_mvc.append(mvc(F, sr_hi, tax=TAX_RATE))
+        hv = mvc(F, sr_lo, tax=TAX_RATE)
+        hi_mvc.append(hv if math.isfinite(hv) else np.nan)
+        if not math.isfinite(hv):
+            inf_from = y
+    lo_mvc = np.array(lo_mvc)
+    hi_mvc = np.array(hi_mvc)
+    top = 1e6
+
+    ax.fill_between(yrs, lo_mvc, np.nan_to_num(hi_mvc, nan=top),
+                    color=AMBER, alpha=0.18, lw=0)
+    ax.semilogy(yrs, lo_mvc, color=GREEN, lw=1.8,
+                label="optimistic end of 95% Sharpe CI")
+    ax.semilogy(yrs, hi_mvc, color=RED, lw=1.8,
+                label="pessimistic end of 95% Sharpe CI")
+    if inf_from is not None:
+        ax.axvspan(yrs[0], inf_from + 0.5, color=RED, alpha=0.07, lw=0)
+        ax.text((yrs[0] + inf_from) / 2, 3.4e5,
+                "Sharpe CI contains zero\n→ MVC unbounded above",
+                ha="center", fontsize=6.9, color=RED)
+    ax.axhline(CAPITAL, color=INK, lw=1.3, ls=(0, (4, 3)))
+    ax.text(29.4, CAPITAL * 1.28, "\\$3,000", fontsize=7.0, color=INK,
+            ha="right")
+    ax.set_xlabel("years of data used to estimate the Sharpe ratio")
+    ax.set_ylabel("minimum viable capital  (log scale)")
+    ax.set_title("(b) MVC is an interval, not a number")
+    ax.set_ylim(1e3, top)
+    ax.set_xlim(2, 30)
+    ax.legend(loc="lower left", fontsize=6.6)
     despine(ax)
-    note(ax, "circles mark break-even capital\nfor each cost stack",
-         loc="upper left", fontsize=6.5)
+    note(ax, "point estimate \\$5,790 at $\\widehat{SR}=0.5$;\n"
+             "even the optimistic bound exceeds \\$3,000",
+         loc="upper right", fontsize=6.4)
 
     # ------------------------------------------ (c) the $3,000 verdict
     ax = fig.add_subplot(gs[1, 0])
@@ -100,8 +116,8 @@ def fig_mvc():
     for name, keys, col in STACKS:
         F = annual_fixed(*keys)
         names.append(name.split(":")[0].replace(" + ", "+"))
-        nets.append(gross - prop - F)
-        cols.append(GREEN if gross - prop - F > 0 else RED)
+        nets.append((1 - TAX_RATE) * (gross - prop) - F)
+        cols.append(GREEN if (1 - TAX_RATE) * (gross - prop) - F > 0 else RED)
     y = np.arange(len(names))
     ax.barh(y, nets, color=cols, height=0.6, edgecolor="none")
     ax.axvline(0, color=INK, lw=1.0)
@@ -112,13 +128,14 @@ def fig_mvc():
     ax.set_yticks(y)
     ax.set_yticklabels(names, fontsize=7.0)
     ax.invert_yaxis()
-    ax.set_xlabel("expected net annual P&L at \\$3,000  (USD)")
-    ax.set_title("(c) At \\$3,000, only a zero-subscription stack survives")
+    ax.set_xlabel("expected AFTER-TAX net annual P&L at \\$3,000  (USD)")
+    ax.set_title("(c) After tax, even the free stack barely clears zero")
     ax.set_xlim(-4000, 1100)
     despine(ax)
-    note(ax, f"gross expected return \\${gross:.0f}/yr at Sharpe 0.5;\n"
+    note(ax, f"gross \\${gross:.0f}/yr at Sharpe 0.5, "
+             f"\\${(1 - TAX_RATE) * (gross - prop):.0f} after 30% tax;\n"
              f"a \\$30/mo data plan costs \\$360/yr",
-         loc="upper left", fontsize=6.5)
+         loc="upper left", fontsize=6.4)
 
     # ------------------------------------------ (d) capital by phase
     ax = fig.add_subplot(gs[1, 1])

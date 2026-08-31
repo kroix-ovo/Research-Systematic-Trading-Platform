@@ -1,9 +1,4 @@
-"""Section 6.5 -- pairs trading: Ornstein-Uhlenbeck, cointegration, Kalman.
-
-The report gives the OU half-life estimator as half-life = -ln(2)/lambda from
-the regression dX_t = lambda X_{t-1} + c + eps. That is the Euler approximation
-of the exact discretisation, and it is biased in a direction that matters.
-"""
+"""Section 6.5 -- pairs trading: Ornstein-Uhlenbeck, cointegration, Kalman."""
 
 from __future__ import annotations
 
@@ -66,13 +61,13 @@ def _ou_stationary(reg: Registry) -> None:
 
 
 def _ou_half_life(reg: Registry) -> None:
-    """The report's half-life = -ln2/lambda is the Euler approximation.
+    """Verify the exact inversion and quantify the superseded Euler approximation.
 
     Exact discretisation of dX = theta(mu - X)dt + sigma dW at spacing dt gives
         X_t - X_{t-1} = (e^{-theta dt} - 1)(X_{t-1} - mu) + noise
     so the OLS slope estimates lambda = e^{-theta dt} - 1, hence
         theta = -ln(1 + lambda)/dt        (exact)
-        theta = -lambda/dt                (report, first-order in theta*dt)
+        theta = -lambda/dt                (first-order in theta*dt)
     and half-life = ln(2)/theta.
     """
     g = rng(702)
@@ -110,37 +105,34 @@ def _ou_half_life(reg: Registry) -> None:
                for t, th, rp, ex, _, _ in rows],
     )
 
-    fast = [r for r in rows if r[0] >= 0.25]
-    slow = [r for r in rows if r[0] <= 0.05]
-    reg.add(
+    # Use the population slope here so the direction-of-bias assertion is not
+    # obscured by OLS sampling noise at the slowest mean-reversion speed.
+    bias_rows = []
+    for theta in (0.02, 0.05, 0.10, 0.25, 0.50, 1.00):
+        lam = math.expm1(-theta)
+        true_hl = math.log(2) / theta
+        approx_hl = -math.log(2) / lam
+        bias_rows.append((theta, true_hl, approx_hl,
+                          approx_hl / true_hl - 1))
+    errors = [r[3] for r in bias_rows]
+    overstates_and_grows = all(e > 0 for e in errors) and all(
+        b > a for a, b in zip(errors, errors[1:]))
+
+    reg.truth(
         "M-04", SEC,
-        r"The report's half-life $=-\ln 2/\lambda$ systematically OVERSTATES "
-        r"the half-life, and the error grows with the speed of mean reversion",
-        "same simulation; relative error of the report's formula against the "
-        "known truth",
-        "half-life estimate should equal ln(2)/theta",
-        "; ".join(f"theta={t:.2f} (true HL {th:.1f}): report {rp:.1f} "
-                  f"({e:+.0%})" for t, th, rp, _, e, _ in rows),
-        "FAIL",
-        r"\textbf{Correction required.} Section 6.5 states 'Estimate via OLS of "
-        r"$\Delta X_t=\lambda X_{t-1}+c+\varepsilon_t$; then $\theta=-\lambda$ "
-        r"and half-life $=-\ln 2/\lambda$'. The exact discretisation of the OU "
-        r"process gives $\lambda=e^{-\theta\Delta t}-1$, so the correct "
-        r"inversion is $\theta=-\ln(1+\lambda)/\Delta t$ and half-life "
-        r"$=-\Delta t\ln 2/\ln(1+\lambda)$. The report's form is the first-order "
-        r"Taylor expansion, accurate only when $\theta\Delta t\ll1$. "
-        rf"For slow reversion (theta $\le$ {slow[-1][0]:g}) the error is under "
-        rf"{max(abs(r[4]) for r in slow):.1%} and harmless. For the fast "
-        r"reversion that actually makes a pairs trade worth doing "
-        rf"(theta $\ge$ {fast[0][0]:g}) it reaches "
-        rf"{max(abs(r[4]) for r in fast):.0%}. "
-        r"The error is one-directional: the estimate is always too LONG. "
-        r"Operationally that means holding period limits, time-based stops and "
-        r"capital-allocation horizons are all set too generously, on the "
-        r"strategies where the mis-estimate is worst. The fix is one line of "
-        r"code and removes the bias entirely.",
-        table=[{"theta": t, "true_hl": th, "report_hl": rp,
-                "report_err": e} for t, th, rp, _, e, _ in rows],
+        r"The Euler half-life $-\ln 2/\lambda$ overstates the exact OU "
+        r"half-life, with error increasing in mean-reversion speed",
+        "evaluate the population slope lambda=exp(-theta*dt)-1 at six speeds "
+        "and compare the Euler approximation with ln(2)/theta",
+        overstates_and_grows,
+        "positive, monotonically increasing approximation error",
+        "; ".join(f"theta={t:.2f} (true HL {th:.1f}): Euler {ap:.1f} "
+                  f"({e:+.0%})" for t, th, ap, e in bias_rows),
+        r"The corrected report uses $-\Delta t\ln 2/\ln(1+\lambda)$. This "
+        r"check retains the discarded Euler form only as a regression guard that "
+        r"quantifies why it must not be restored.",
+        table=[{"theta": t, "true_hl": th, "euler_hl": ap,
+                "euler_err": e} for t, th, ap, e in bias_rows],
     )
 
 

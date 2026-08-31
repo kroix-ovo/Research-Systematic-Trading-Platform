@@ -32,7 +32,7 @@ def run(reg: Registry) -> None:
 
 
 def _cache_discounts(reg: Registry) -> None:
-    """Section 6.7 claims a '~90-98% cheaper cache rate on DeepSeek/GLM/Kimi'."""
+    """Verify the corrected provider-specific cache-discount ranges."""
     rows = [
         ("DeepSeek V4 Flash", 0.14, 0.0028),
         ("DeepSeek V4 Pro", 0.435, 0.003625),
@@ -45,29 +45,29 @@ def _cache_discounts(reg: Registry) -> None:
     disc = [(n, miss, hit, 1 - hit / miss) for n, miss, hit in rows]
     deepseek = [d for d in disc if d[0].startswith("DeepSeek")]
     others = [d for d in disc if not d[0].startswith("DeepSeek")]
+    lo_deepseek = min(d[3] for d in deepseek)
+    hi_deepseek = max(d[3] for d in deepseek)
     lo_other = min(d[3] for d in others)
     hi_other = max(d[3] for d in others)
 
-    reg.add(
+    displayed_ranges_match = (
+        round(100 * lo_deepseek) == 98
+        and round(100 * hi_deepseek) == 99
+        and round(100 * lo_other) == 75
+        and round(100 * hi_other) == 90
+    )
+    reg.truth(
         "A-01", SEC1,
-        r"Section 6.7's claim of a ``$\sim$90--98\%-cheaper cache rate on "
-        r"DeepSeek/GLM/Kimi''",
+        r"Cache-hit input is $\sim$98--99\% cheaper for DeepSeek and "
+        r"$\sim$75--90\% cheaper for GLM/Kimi at the listed prices",
         "compute 1 - (cache-hit price / cache-miss price) from the report's own "
         "section 1.2 pricing table",
-        "90-98% discount across DeepSeek, GLM and Kimi",
+        displayed_ranges_match,
+        "rounded ranges 98-99% for DeepSeek and 75-90% for GLM/Kimi",
         "; ".join(f"{n} {d:.0%}" for n, _, _, d in disc),
-        "FAIL",
-        r"\textbf{Internal inconsistency.} The 90--98\% range holds only for "
-        rf"DeepSeek ({deepseek[0][3]:.0%} and {deepseek[1][3]:.0%}). For the GLM "
-        rf"and Kimi families the same table gives discounts of "
-        rf"{lo_other:.0%}--{hi_other:.0%} -- real and worth having, but not the "
-        r"order of magnitude claimed. The two statements are computed from the "
-        r"same table and contradict each other. This matters because section "
-        r"6.7 presents prompt caching as the primary cost-control lever: if the "
-        r"actual saving on a GLM coding plan is 82\% rather than 98\%, the "
-        r"residual spend is nine times larger than the sentence implies. "
-        r"Recommended fix: state ``up to $\sim$98\% on DeepSeek, "
-        rf"$\sim${lo_other:.0%}--{hi_other:.0%} on GLM/Kimi''.",
+        r"The provider-specific wording removes the former internal "
+        r"inconsistency. DeepSeek Pro computes to 99.17\%, so the upper bound "
+        r"must round to 99\%, not 98\%.",
         table=[{"model": n, "miss": m, "hit": h, "discount": d}
                for n, m, h, d in disc],
     )

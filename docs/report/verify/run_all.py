@@ -2,12 +2,15 @@
 
     python3 run_all.py
 
-Writes ../out/verification_results.json and prints a summary table.
-Fully deterministic: same seeds in, same numbers out.
+Writes ../out/verification_results.json and prints a summary table. Random
+streams are deterministic. Exact floating-point residuals additionally depend
+on the pinned numerical stack and platform; pass/fail comparisons use explicit
+tolerances so acceptance is stable across ordinary last-bit variation.
 """
 
 from __future__ import annotations
 
+import resource
 import sys
 import time
 from pathlib import Path
@@ -26,6 +29,7 @@ MODULES = [
     ("v07_meanrev", "Pairs trading: OU, cointegration, Kalman"),
     ("v08_ml_regime", "Regime detection and the ML toolkit"),
     ("v09_report_arithmetic", "Report-internal arithmetic and consistency"),
+    ("v10_mvc", "Minimum viable capital and provider pricing"),
 ]
 
 STATUS_ORDER = ["FAIL", "FLAG", "PASS", "INFO"]
@@ -40,8 +44,10 @@ def main() -> int:
         mod = __import__(mod_name)
         before = len(reg.checks)
         mod.run(reg)
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1048576
         print(f"    {len(reg.checks) - before:3d} checks "
-              f"in {time.time() - t:6.1f}s", flush=True)
+              f"in {time.time() - t:6.1f}s   peak RSS {peak:5.0f} MB",
+              flush=True)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     reg.dump(OUT_DIR / "verification_results.json")
@@ -68,7 +74,9 @@ def main() -> int:
             print(f"             {c.claim[:100]}")
 
     print(f"\nWrote {OUT_DIR / 'verification_results.json'}")
-    return 0
+    # Make the suite usable as a CI gate. Previously the process exited zero
+    # even when one or more checks were marked FAIL.
+    return 1 if summary.get("FAIL", 0) else 0
 
 
 if __name__ == "__main__":

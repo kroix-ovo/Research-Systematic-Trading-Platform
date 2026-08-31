@@ -38,16 +38,6 @@ The report gives $g\approx\mu-\tfrac12\sigma^2$ without saying whether $\mu,\sig
 The report presents the vol target and the leverage cap as independent constraints. They are not: whenever the cap binds, realised volatility falls below target (here 14.33\% vs 15.0\%). In calm regimes -- exactly when $\sigma^*/\sigma$ is largest -- the cap silently converts the strategy from vol-targeted to constant-leverage. The system should log cap-binding frequency as a first-class monitoring metric, because a strategy that spends most of its life against the cap is not the strategy that was backtested.
 \end{caveat}
 
-\begin{finding}{P-13 \; --- \; 2.4 Portfolio construction}
-\textbf{Claim under test.} Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do
-
-\textbf{Method.} sweep the starting weight away from the frictionless optimum and measure the traded amount under each cost model
-
-\textbf{Expected.} report claims quadratic costs give a no-trade region \quad \textbf{Measured.} quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04
-
-\textbf{Correction required.} Section 2.4 states that quadratic costs 'give a closed form AND a no-trade region'. The closed form is correct (P-12); the no-trade region is not. A smooth quadratic penalty has zero derivative at zero trade, so the first-order condition always prescribes a strictly positive trade -- the solution shrinks toward $w_0$ (partial adjustment) but never stops. A no-trade region requires a cost function with a KINK at zero, i.e. proportional/L1 costs, whose subgradient interval $[-c,c]$ absorbs small deviations. This is not pedantry: it changes the implementation. If the system is built on the quadratic model expecting bands to appear, it will rebalance every single day and bleed the cost the band was meant to save. Real spreads and commissions ARE proportional, so the L1 model is also the more faithful one. Recommended fix: either state the objective with an L1 term, or keep the quadratic form and impose the no-trade band as an explicit separate rule.
-\end{finding}
-
 \begin{caveat}{Q-02 \; --- \; 2.7 Risk metrics}
 \textbf{Claim under test.} The report's $\mu+z_\alpha\sigma$ is ambiguous without a sign convention
 
@@ -98,22 +88,12 @@ The report presents PBO as a scalar to be compared against a threshold. In pract
 The approximation is sound but its conditions should be stated. Two distinct corrections are dropped. First, the exact $\kappa$ solves a transcendental equation whose solution approaches $\tilde\kappa$ only as $\tau\to0$. Second, the denominator should be $\tilde\eta=\eta-\gamma\tau/2$, not $\eta$: the permanent-impact parameter partially offsets the temporary one because half of each trade's permanent impact is paid by the trader's own remaining inventory. At a fine grid (N=1000) the error in $\kappa$ is -0.00\% and irrelevant; on a coarse schedule (N=5, i.e. five slices -- a realistic daily-ETF execution) it is -0.49\%. Crucially, the OBJECTIVE penalty is tiny in every case (9.8e-09 at worst), because the cost surface is very flat near its optimum. The practical conclusion for the report is reassuring and worth stating explicitly: execution-schedule optimisation is forgiving, so effort spent calibrating impact parameters precisely is better spent elsewhere -- which reinforces the report's own section 5.7 argument against premature optimisation.
 \end{caveat}
 
-\begin{finding}{M-04 \; --- \; 6.5 Pairs / statistical arbitrage}
-\textbf{Claim under test.} The report's half-life $=-\ln 2/\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion
+\begin{caveat}{MVC-10 \; --- \; MVC. Minimum viable capital}
+\textbf{Claim under test.} Tax drag was absent from the first draft of this section and raises the capital floor materially
 
-\textbf{Method.} same simulation; relative error of the report's formula against the known truth
+\textbf{Method.} MVC at F=\$360/yr, SR=0.5, across blended short-term rates
 
-\textbf{Expected.} half-life estimate should equal ln(2)/theta \quad \textbf{Measured.} theta=0.02 (true HL 34.7): report 34.7 (-0\%); theta=0.05 (true HL 13.9): report 14.2 (+2\%); theta=0.10 (true HL 6.9): report 7.3 (+6\%); theta=0.25 (true HL 2.8): report 3.1 (+14\%); theta=0.50 (true HL 1.4): report 1.8 (+27\%); theta=1.00 (true HL 0.7): report 1.1 (+58\%)
+\textbf{Expected.} untaxed \$5,790 \quad \textbf{Measured.} 15\%: \$6,812 (+18\%); 24\%: \$7,619 (+32\%); 30\%: \$8,272 (+43\%); 37\%: \$9,191 (+59\%)
 
-\textbf{Correction required.} Section 6.5 states 'Estimate via OLS of $\Delta X_t=\lambda X_{t-1}+c+\varepsilon_t$; then $\theta=-\lambda$ and half-life $=-\ln 2/\lambda$'. The exact discretisation of the OU process gives $\lambda=e^{-\theta\Delta t}-1$, so the correct inversion is $\theta=-\ln(1+\lambda)/\Delta t$ and half-life $=-\Delta t\ln 2/\ln(1+\lambda)$. The report's form is the first-order Taylor expansion, accurate only when $\theta\Delta t\ll1$. For slow reversion (theta $\le$ 0.05) the error is under 2.3\% and harmless. For the fast reversion that actually makes a pairs trade worth doing (theta $\ge$ 0.25) it reaches 58\%. The error is one-directional: the estimate is always too LONG. Operationally that means holding period limits, time-based stops and capital-allocation horizons are all set too generously, on the strategies where the mis-estimate is worst. The fix is one line of code and removes the bias entirely.
-\end{finding}
-
-\begin{finding}{A-01 \; --- \; 1. Alternative and cheaper models}
-\textbf{Claim under test.} Section 6.7's claim of a ``$\sim$90--98\%-cheaper cache rate on DeepSeek/GLM/Kimi''
-
-\textbf{Method.} compute 1 - (cache-hit price / cache-miss price) from the report's own section 1.2 pricing table
-
-\textbf{Expected.} 90-98\% discount across DeepSeek, GLM and Kimi \quad \textbf{Measured.} DeepSeek V4 Flash 98\%; DeepSeek V4 Pro 99\%; Kimi K2.6 / K2.7 Code 80\%; Kimi K2.5 75\%; Kimi K3 90\%; GLM-4.6 82\%; GLM-4.5-Air 85\%
-
-\textbf{Internal inconsistency.} The 90--98\% range holds only for DeepSeek (98\% and 99\%). For the GLM and Kimi families the same table gives discounts of 75\%--90\% -- real and worth having, but not the order of magnitude claimed. The two statements are computed from the same table and contradict each other. This matters because section 6.7 presents prompt caching as the primary cost-control lever: if the actual saving on a GLM coding plan is 82\% rather than 98\%, the residual spend is nine times larger than the sentence implies. Recommended fix: state ``up to $\sim$98\% on DeepSeek, $\sim$75\%--90\% on GLM/Kimi''.
-\end{finding}
+At the \textasciitilde{}200\% annual turnover of a vol-managed sleeve essentially all gains are SHORT-TERM, taxed as ordinary income. Worse, for an individual without trader status the data subscription is not deductible at all -- the Tax Cuts and Jobs Act suspended miscellaneous itemized deductions -- so the fixed cost is paid with after-tax dollars while the profit is taxed. At a 30\% blended rate the floor rises from \$5,790 to \$8,272, a 43\% increase, and the effect compounds with the hyperbolic sensitivity to Sharpe in MVC-04. \textbf{The practical consequence is a recommendation the report did not previously make: hold this strategy in a Roth IRA.} A high-turnover, long-only, unlevered strategy is close to the ideal case for a tax-sheltered wrapper, where $t=0$ and the entire drag disappears. The constraints -- annual contribution limits and restricted withdrawals -- are nearly irrelevant at this account size and for capital that is not needed back. Nothing here is tax advice; confirm treatment with a qualified professional.
+\end{caveat}

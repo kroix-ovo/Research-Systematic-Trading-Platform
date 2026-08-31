@@ -13,7 +13,9 @@ FLAG  the claim is correct only under an unstated assumption, is imprecise,
 FAIL  the claim is wrong as written and must be corrected.
 INFO  a derived quantity recorded for the report; not a pass/fail claim.
 
-All randomness is seeded. Re-running reproduces byte-identical results.
+All randomness is seeded. The pinned dependency environment reproduces the
+reported rounded values; explicit tolerances keep outcomes stable across
+ordinary platform-level floating-point variation.
 """
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ from typing import Any
 import numpy as np
 
 # Master seed. Every module derives its streams from this so the whole suite is
-# reproducible from one number.
+# reproducible from one number within the pinned numerical environment.
 MASTER_SEED = 20260811
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "out"

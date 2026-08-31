@@ -58,19 +58,69 @@ def _sharpe_standard_error(reg: Registry) -> None:
          lambda size: g.standard_t(6, size) / math.sqrt(6 / 4), 0.0, 6.0),
         ("skew-normal(a=6)", None, None, None),
     ):
-        if label == "skew-normal(a=6)":
-            rs = np.random.RandomState(11)
-            base = stats.skewnorm.rvs(6, size=(reps, n), random_state=rs)
-            base = (base - base.mean()) / base.std()
-            skew_t = float(stats.skew(base.ravel()[:2_000_000]))
-            kurt_t = float(stats.kurtosis(base.ravel()[:2_000_000])) + 3.0
-        else:
-            base = sampler((reps, n))
-            base = (base - base.mean()) / base.std()
+        # Drawn in row chunks. A single (reps, n) array is 2 GB here, and the
+        # standardise-and-shift steps each allocate another copy -- enough to
+        # exhaust a 8 GB machine. Chunking is value-identical because every
+        # sampler fills C-order, and the generator state is saved and restored
+        # so the second pass replays exactly the same draws.
+        CH = 5_000
+        skewnorm_case = label == "skew-normal(a=6)"
 
+        def _draw(rows, src):
+            if skewnorm_case:
+                return stats.skewnorm.rvs(6, size=(rows, n), random_state=src)
+            return sampler((rows, n))
+
+        def _fresh():
+            return np.random.RandomState(11) if skewnorm_case else None
+
+        state = None if skewnorm_case else g.bit_generator.state
+        src = _fresh()
+
+        # Pass 1: global mean and standard deviation by streaming sums.
+        s1 = s2 = 0.0
+        cnt = 0
+        left = reps
+        while left > 0:
+            m_ = min(CH, left)
+            b = _draw(m_, src)
+            s1 += float(b.sum())
+            s2 += float(np.square(b).sum())
+            cnt += b.size
+            left -= m_
+            del b
+        gmean = s1 / cnt
+        gstd = math.sqrt(max(s2 / cnt - gmean * gmean, 0.0))
+
+        # Pass 2: replay the identical draws, standardise, accumulate Sharpes.
+        if skewnorm_case:
+            src = _fresh()
+        else:
+            g.bit_generator.state = state
         mu_target = 0.06                       # per-period mean -> SR = 0.06
-        x = base + mu_target
-        sr_hat = x.mean(axis=1) / x.std(axis=1, ddof=1)
+        sr_parts, head = [], []
+        head_left = 2_000_000
+        left = reps
+        while left > 0:
+            m_ = min(CH, left)
+            b = (_draw(m_, src) - gmean) / gstd
+            if head_left > 0:
+                take = min(head_left, b.size)
+                head.append(b.ravel()[:take].copy())
+                head_left -= take
+            xb = b + mu_target
+            sr_parts.append(xb.mean(axis=1) / xb.std(axis=1, ddof=1))
+            left -= m_
+            del b, xb
+        sr_hat = np.concatenate(sr_parts)
+        del sr_parts
+
+        if skewnorm_case:
+            headv = np.concatenate(head)
+            skew_t = float(stats.skew(headv))
+            kurt_t = float(stats.kurtosis(headv)) + 3.0
+            del headv
+        del head
         emp_sd = float(np.std(sr_hat, ddof=1))
         sr_true = mu_target
         predicted = _sr_se(sr_true, n, skew_t, kurt_t)
@@ -203,7 +253,15 @@ def _false_strategy_theorem(reg: Registry) -> None:
         approx = _fst_expected_max(N)
         # Direct MC: expected maximum of N i.i.d. standard normals.
         reps = max(4000, min(40000, 4_000_000 // N))
-        mc = float(np.mean(g.standard_normal((reps, N)).max(axis=1)))
+        # Chunked so the peak allocation stays near 16 MB regardless of N.
+        # Row-major fill keeps the stream identical to one big draw.
+        _chunk = max(1, 2_000_000 // N)
+        _acc, _left = 0.0, reps
+        while _left > 0:
+            _m = min(_chunk, _left)
+            _acc += float(g.standard_normal((_m, N)).max(axis=1).sum())
+            _left -= _m
+        mc = _acc / reps
         rows.append((N, approx, mc, approx / mc - 1))
 
     worst = max(abs(r[3]) for r in rows)
@@ -237,7 +295,14 @@ def _dsr_headline(reg: Registry) -> None:
     """The report quotes: 1000 trials -> expected max Sharpe 3.26."""
     approx = _fst_expected_max(1000, var_sr=1.0)
     g = rng(504)
-    mc = float(np.mean(g.standard_normal((200_000, 1000)).max(axis=1)))
+    # Chunked: a single (200_000, 1000) draw is a 1.6 GB allocation.
+    # standard_normal fills C-order, so chunking by rows consumes the
+    # same stream and yields the same values.
+    _acc, _n = 0.0, 0
+    for _ in range(40):
+        _acc += float(g.standard_normal((5_000, 1000)).max(axis=1).sum())
+        _n += 5_000
+    mc = _acc / _n
     reg.close(
         "S-08", SEC,
         r"Report's headline claim: with $E[SR]=0$, $V[SR]=1$, after 1{,}000 "
@@ -494,7 +559,7 @@ def _purged_cv(reg: Registry) -> None:
                     or len(np.unique(y[te])) < 2:
                 return
             clf = RandomForestClassifier(n_estimators=80, min_samples_leaf=3,
-                                         n_jobs=-1, random_state=0)
+                                         n_jobs=1, random_state=0)
             clf.fit(X[tr], y[tr])
             sink.append(roc_auc_score(y[te], clf.predict_proba(X[te])[:, 1]))
 

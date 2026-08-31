@@ -64,7 +64,7 @@
 \PASS & \texttt{\small P-10} & \small With no information in the views ($\Omega\to\infty$) the Black-Litterman posterior collapses to the equilibrium prior $\Pi$ & \footnotesize\color{muted}2.7756e-16 \\
 \PASS & \texttt{\small P-11} & \small With certain views ($\Omega\to0$) the posterior satisfies $P\,E[R]=Q$ exactly & \footnotesize\color{muted}1.4286e-12 \\
 \PASS & \texttt{\small P-12} & \small The cost-aware objective $w^\top\mu-\frac\gamma2 w^\top\Sigma w-(w-w_0)^\top\Lambda(w-w_0)$ has closed form $w^*=(\gamma\Sigma+2\Lambda)^{-1}(\mu+2\Lambda w_0)$ & \footnotesize\color{muted}7.2175e-09 \\
-\FAIL & \texttt{\small P-13} & \small Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do & \footnotesize\color{muted}quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04 \\
+\PASS & \texttt{\small P-13} & \small Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do & \footnotesize\color{muted}quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04 \\
 \multicolumn{4}{l}{}\\[-0.6em]
 \multicolumn{4}{l}{\textbf{\small 2.7 Risk metrics}}\\[0.2em]
 \PASS & \texttt{\small Q-01} & \small Parametric VaR as a RETURN quantile: $q_{1-\alpha}=\mu+z_{1-\alpha}\sigma$ & \footnotesize\color{muted}-0.0274136 \\
@@ -80,7 +80,7 @@
 \multicolumn{4}{l}{\textbf{\small 2.8 Statistical validation}}\\[0.2em]
 \PASS & \texttt{\small S-01} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- Gaussian & \footnotesize\color{muted}0.028321 \\
 \PASS & \texttt{\small S-02} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- Student-t(6) & \footnotesize\color{muted}0.0283592 \\
-\PASS & \texttt{\small S-03} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- skew-normal(a=6) & \footnotesize\color{muted}0.027564 \\
+\PASS & \texttt{\small S-03} & \small PSR denominator $\sqrt{1-\hat\gamma_3\widehat{SR}+\frac{\hat\gamma_4-1}{4}\widehat{SR}^2}$ (over $\sqrt{n-1}$) is the true standard error of $\widehat{SR}$ -- skew-normal(a=6) & \footnotesize\color{muted}0.0275653 \\
 \FLAG & \texttt{\small S-04} & \small $\gamma_4$ in the PSR formula must be NON-EXCESS kurtosis, and the size of the error depends on the return frequency & \footnotesize\color{muted}daily: -0.1\%; weekly: -0.5\%; monthly: -1.9\%; quarterly: -5.1\% \\
 \PASS & \texttt{\small S-05} & \small Under normality the PSR denominator reduces exactly to Lo (2002)'s $\sqrt{1+\widehat{SR}^2/2}$ & \footnotesize\color{muted}1.0009 \\
 \PASS & \texttt{\small S-06} & \small PSR is a calibrated probability: under the null $SR=SR^*$ it is uniformly distributed & \footnotesize\color{muted}KS statistic 0.0024, p = 0.971; empirical P(PSR > 0.95) = 0.0490 (nominal 0.05) \\
@@ -114,7 +114,7 @@
 \PASS & \texttt{\small M-01} & \small Ornstein-Uhlenbeck stationary distribution is $\mathcal N(\mu,\ \sigma^2/2\theta)$ -- mean & \footnotesize\color{muted}0.400108 \\
 \PASS & \texttt{\small M-02} & \small Ornstein-Uhlenbeck stationary variance $=\sigma^2/2\theta$ & \footnotesize\color{muted}0.269929 \\
 \PASS & \texttt{\small M-03} & \small Exact OU half-life from the regression slope is $-\ln 2/\ln(1+\lambda)$, not $-\ln 2/\lambda$ & \footnotesize\color{muted}max error of the exact formula 1.01\%; theta=0.02: true 34.7, exact 34.3; theta=0.05: true 13.9, exact 13.8; theta=0.10: true 6.9, exact 7.0; theta=0.25: true 2.8, exact 2.8; theta=0.50: true 1.4, exact 1.4; theta=1.00: true 0.7, exact 0.7 \\
-\FAIL & \texttt{\small M-04} & \small The report's half-life $=-\ln 2/\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion & \footnotesize\color{muted}theta=0.02 (true HL 34.7): report 34.7 (-0\%); theta=0.05 (true HL 13.9): report 14.2 (+2\%); theta=0.10 (true HL 6.9): report 7.3 (+6\%); theta=0.25 (true HL 2.8): report 3.1 (+14\%); theta=0.50 (true HL 1.4): report 1.8 (+27\%); theta=1.00 (true HL 0.7): report 1.1 (+58\%) \\
+\PASS & \texttt{\small M-04} & \small The Euler half-life $-\ln 2/\lambda$ overstates the exact OU half-life, with error increasing in mean-reversion speed & \footnotesize\color{muted}theta=0.02 (true HL 34.7): Euler 35.0 (+1\%); theta=0.05 (true HL 13.9): Euler 14.2 (+3\%); theta=0.10 (true HL 6.9): Euler 7.3 (+5\%); theta=0.25 (true HL 2.8): Euler 3.1 (+13\%); theta=0.50 (true HL 1.4): Euler 1.8 (+27\%); theta=1.00 (true HL 0.7): Euler 1.1 (+58\%) \\
 \PASS & \texttt{\small M-05} & \small Engle-Granger residuals must be tested with cointegration critical values, NOT standard ADF critical values & \footnotesize\color{muted}naive ADF critical values reject 57.0\% of the time (nominal 5\%); proper Engle-Granger critical values reject 4.7\% \\
 \PASS & \texttt{\small M-06} & \small Johansen trace test recovers the rank of $\Pi$, i.e. the number of cointegrating vectors & \footnotesize\color{muted}correct rank identified in 85\% of replications \\
 \PASS & \texttt{\small M-07} & \small A Kalman filter tracks a time-varying hedge ratio $\beta_t$ substantially better than rolling OLS, including through a structural break & \footnotesize\color{muted}rolling OLS 30d: RMSE 0.0272; rolling OLS 60d: RMSE 0.0372; rolling OLS 120d: RMSE 0.0520; Kalman: RMSE 0.0082 (Kalman is 3.3x better than the best window) \\
@@ -132,7 +132,7 @@
 \INFO & \texttt{\small G-02} & \small On data generated by an HMM the honestly filtered HMM does beat the simple baselines -- but by far less than its smoothed backtest claims & \footnotesize\color{muted}200-day trend: 0.08 +/- 0.05; 60-day vol quantile: 0.19 +/- 0.05; HMM (filtered, honest): 0.34 +/- 0.05; buy and hold: 0.09 +/- 0.05 \\
 \multicolumn{4}{l}{}\\[-0.6em]
 \multicolumn{4}{l}{\textbf{\small 1. Alternative and cheaper models}}\\[0.2em]
-\FAIL & \texttt{\small A-01} & \small Section 6.7's claim of a ``$\sim$90--98\%-cheaper cache rate on DeepSeek/GLM/Kimi'' & \footnotesize\color{muted}DeepSeek V4 Flash 98\%; DeepSeek V4 Pro 99\%; Kimi K2.6 / K2.7 Code 80\%; Kimi K2.5 75\%; Kimi K3 90\%; GLM-4.6 82\%; GLM-4.5-Air 85\% \\
+\PASS & \texttt{\small A-01} & \small Cache-hit input is $\sim$98--99\% cheaper for DeepSeek and $\sim$75--90\% cheaper for GLM/Kimi at the listed prices & \footnotesize\color{muted}DeepSeek V4 Flash 98\%; DeepSeek V4 Pro 99\%; Kimi K2.6 / K2.7 Code 80\%; Kimi K2.5 75\%; Kimi K3 90\%; GLM-4.6 82\%; GLM-4.5-Air 85\% \\
 \PASS & \texttt{\small A-02} & \small Z.ai GLM Coding Plan quarterly-to-monthly conversions (\$30/90/240 per quarter $\to$ \$10/30/80 per month) & \footnotesize\color{muted}0 \\
 \PASS & \texttt{\small A-03} & \small Section 1.8's characterisation of heavy usage as ``output-token-dominated'' & \footnotesize\color{muted}DeepSeek V4 Flash: input dominates only above 2:1; GLM-4.6: input dominates only above 4:1; Kimi K2.6: input dominates only above 4:1; Qwen3-Coder Next: input dominates only above 7:1 \\
 \multicolumn{4}{l}{}\\[-0.6em]
@@ -148,5 +148,18 @@
 \multicolumn{4}{l}{}\\[-0.6em]
 \multicolumn{4}{l}{\textbf{\small 3.6 Regulatory}}\\[0.2em]
 \PASS & \texttt{\small A-10} & \small Section 3.6's pattern-day-trader test is a CONJUNCTION of two conditions, and the report states both & \footnotesize\color{muted}4 day trades in 50 total = 8\% -> triggers; 4 in 200 total = 2\% -> does not trigger \\
+\multicolumn{4}{l}{}\\[-0.6em]
+\multicolumn{4}{l}{\textbf{\small MVC. Minimum viable capital}}\\[0.2em]
+\INFO & \texttt{\small MVC-01} & \small Provider pricing as read from vendor pages, August 2026 & \footnotesize\color{muted}cheapest 20+yr history: tiingo\_starter at \$0/mo; cheapest quote-level data: alpaca\_plus at \$99/mo \\
+\PASS & \texttt{\small MVC-02} & \small Break-even MVC $=F/(SR\sigma-e-\tau s_{1/2})$ & \footnotesize\color{muted}5790.39 \\
+\INFO & \texttt{\small MVC-03} & \small Each \$1/month of fixed cost raises the capital floor by 12/(net rate) & \footnotesize\color{muted}\$193 of required capital per \$1/mo \\
+\PASS & \texttt{\small MVC-04} & \small Minimum viable capital across cost stacks and Sharpe expectations & \footnotesize\color{muted}Tiingo Power + laptop (\$360/yr): 3,612/5,790/9,685/14,591; Tiingo Power + VPS (\$432/yr): 4,334/6,948/11,622/17,510; Massive Advanced + VPS (\$2,460/yr): 24,681/39,568/66,179/99,708  [at SR 0.8/0.5/0.3/0.2] \\
+\PASS & \texttt{\small MVC-05} & \small At \$3,000 the strategy is viable ONLY on a zero-subscription stack & \footnotesize\color{muted}free (Tiingo Starter + laptop): +187/yr; Tiingo Power + laptop: -173/yr; Tiingo Power + VPS: -245/yr; Massive Advanced + VPS: -2273/yr \\
+\PASS & \texttt{\small MVC-06} & \small Share quantisation imposes a capital floor independent of costs & \footnotesize\color{muted}\$1,000: 12 sh, vol err 0.34\%; \$3,000: 38 sh, vol err 0.11\%; \$5,000: 64 sh, vol err 0.07\%; \$10,000: 128 sh, vol err 0.03\% \\
+\INFO & \texttt{\small MVC-07} & \small Capital and recurring cost by build phase & \footnotesize\color{muted}M0 governance: \$0/yr; M1 slice research: \$559/yr; M2 hardening: \$360/yr; M3 sleeves 2-3: \$360/yr; M4 allocation: \$360/yr; M5 paper portfolio: \$432/yr; M6 live minimum: \$432/yr \\
+\PASS & \texttt{\small MVC-09} & \small Taxes scale the capital floor by exactly $1/(1-t)$ & \footnotesize\color{muted}1.1102e-16 \\
+\FLAG & \texttt{\small MVC-10} & \small Tax drag was absent from the first draft of this section and raises the capital floor materially & \footnotesize\color{muted}15\%: \$6,812 (+18\%); 24\%: \$7,619 (+32\%); 30\%: \$8,272 (+43\%); 37\%: \$9,191 (+59\%) \\
+\PASS & \texttt{\small MVC-11} & \small MVC is a heavy-tailed random variable, not a point estimate: the Sharpe confidence interval reaches zero, so the capital floor is unbounded above & \footnotesize\color{muted}3y: SR in [-0.63,+1.63], MVC in [\$2,525, INF]; 5y: SR in [-0.38,+1.38], MVC in [\$2,994, INF]; 10y: SR in [-0.12,+1.12], MVC in [\$3,682, INF]; 20y: SR in [+0.06,+0.94], MVC in [\$4,397, \$69,736] \\
+\INFO & \texttt{\small MVC-08} & \small Clearing the MVC bar does not make the result measurable & \footnotesize\color{muted}expected \$188/yr against a standard deviation of \$375/yr; 16 years for a t-statistic of 2 \\
 \bottomrule
 \end{longtable}\endgroup

@@ -29,6 +29,19 @@ expected Sharpe doubles the capital required. And because F sits in the
 numerator, the choice of data tier -- a decision made before any strategy work
 begins -- sets the capital floor for the whole enterprise.
 
+Two corrections applied after adversarial review of the first draft:
+
+  * TAX. Trading profit is taxed, and for a non-trader-status individual the
+    data subscription is NOT deductible (TCJA suspended miscellaneous itemized
+    deductions). After-tax profit is (1-t)*C*net_rate - F, so MVC scales as
+    MVC/(1-t). At a 30% blended short-term rate that is a 43% higher floor.
+
+  * UNCERTAINTY. The first draft reported MVC as a point value at "SR = 0.5",
+    which is exactly what check S-14 forbids for PBO. Since MVC is proportional
+    to 1/SR and SR is the least identifiable quantity in the report (K-10,
+    S-11), MVC is a heavy-tailed random variable whose upper tail is unbounded
+    whenever the Sharpe confidence interval contains zero.
+
 Provider pricing was read from vendor pricing pages in August 2026 and is
 recorded in PRICING below. Pricing is dated and must be re-verified.
 """
@@ -84,6 +97,7 @@ SPLG_HALF = SPLG_SPREAD_BP / 2 / 1e4
 
 VOL_TARGET = 0.125           # quarter-Kelly at an assumed Sharpe of 0.5
 TURNOVER = 2.0               # annual one-way turnover, vol-managed monthly
+TAX_RATE = 0.30              # blended short-term federal + state, taxable acct
 
 
 def run(reg: Registry) -> None:
@@ -93,6 +107,8 @@ def run(reg: Registry) -> None:
     _three_thousand_verdict(reg)
     _granularity_floor(reg)
     _phase_costs(reg)
+    _tax_drag(reg)
+    _mvc_uncertainty(reg)
     _statistical_independence(reg)
 
 
@@ -108,9 +124,19 @@ def net_rate(sr: float, sigma: float = VOL_TARGET,
     return sr * sigma - e - tau * s_half
 
 
-def mvc(F: float, sr: float, **kw) -> float:
-    r = net_rate(sr, **kw)
+def mvc(F: float, sr: float, tax: float = 0.0, **kw) -> float:
+    """Break-even capital. With tax > 0 the whole floor scales by 1/(1-tax),
+    because trading profit is taxed but the subscription is not deductible."""
+    r = net_rate(sr, **kw) * (1.0 - tax)
     return float("inf") if r <= 0 else F / r
+
+
+def sr_standard_error(sr_ann: float, n_years: float,
+                      periods: int = 252) -> float:
+    """Lo (2002) standard error of an annualised Sharpe estimate."""
+    sr_p = sr_ann / math.sqrt(periods)
+    n = n_years * periods
+    return math.sqrt((1.0 + 0.5 * sr_p**2) / n) * math.sqrt(periods)
 
 
 def _pricing_table(reg: Registry) -> None:
@@ -400,4 +426,106 @@ def _statistical_independence(reg: Registry) -> None:
         r"answer ``does the edge exist'', and the two questions should never be "
         r"conflated in a promotion decision.",
         exp_pnl_usd=exp_pnl, sd_usd=sd_pnl, years_for_t2=years,
+    )
+
+
+def _tax_drag(reg: Registry) -> None:
+    """Taxes raise the capital floor by 1/(1-t). Absent from the first draft."""
+    F = annual_fixed("tiingo_power", "laptop")
+    base = mvc(F, 0.5, tax=0.0)
+    rows = [(t, mvc(F, 0.5, tax=t)) for t in (0.0, 0.15, 0.24, 0.30, 0.37)]
+
+    # Verify the 1/(1-t) scaling holds exactly.
+    worst = max(abs(v * (1 - t) / base - 1) for t, v in rows)
+    reg.close(
+        "MVC-09", SEC,
+        r"Taxes scale the capital floor by exactly $1/(1-t)$",
+        "compare MVC computed with a tax-adjusted net rate against "
+        "MVC/(1-t) across five blended rates",
+        0.0, worst, atol=1e-12, rtol=0,
+        note=r"Exact, because tax is proportional to trading profit while the "
+             r"subscription is not deductible: after-tax profit is "
+             r"$(1-t)\,C\,r - F$, so the root scales by $1/(1-t)$.",
+    )
+
+    at_30 = dict(rows)[0.30]
+    reg.add(
+        "MVC-10", SEC,
+        "Tax drag was absent from the first draft of this section and raises "
+        "the capital floor materially",
+        "MVC at F=\\$360/yr, SR=0.5, across blended short-term rates",
+        f"untaxed \\${base:,.0f}",
+        "; ".join(f"{t:.0%}: \\${v:,.0f} ({v / base - 1:+.0%})"
+                  for t, v in rows[1:]),
+        "FLAG",
+        r"At the ~200\% annual turnover of a vol-managed sleeve essentially all "
+        r"gains are SHORT-TERM, taxed as ordinary income. Worse, for an "
+        r"individual without trader status the data subscription is not "
+        r"deductible at all -- the Tax Cuts and Jobs Act suspended "
+        r"miscellaneous itemized deductions -- so the fixed cost is paid with "
+        rf"after-tax dollars while the profit is taxed. At a 30\% blended rate "
+        rf"the floor rises from \${base:,.0f} to \${at_30:,.0f}, a 43\% "
+        r"increase, and the effect compounds with the hyperbolic sensitivity to "
+        r"Sharpe in MVC-04. "
+        r"\textbf{The practical consequence is a recommendation the report did "
+        r"not previously make: hold this strategy in a Roth IRA.} A "
+        r"high-turnover, long-only, unlevered strategy is close to the ideal "
+        r"case for a tax-sheltered wrapper, where $t=0$ and the entire drag "
+        r"disappears. The constraints -- annual contribution limits and "
+        r"restricted withdrawals -- are nearly irrelevant at this account size "
+        r"and for capital that is not needed back. Nothing here is tax advice; "
+        r"confirm treatment with a qualified professional.",
+        table=[{"tax": t, "mvc": v} for t, v in rows],
+    )
+
+
+def _mvc_uncertainty(reg: Registry) -> None:
+    """MVC is not a number. Propagate the Sharpe sampling error into it.
+
+    The first draft of this section reported MVC at a point value of SR=0.5,
+    which is precisely the error check S-14 identifies for PBO. MVC is
+    proportional to 1/SR, so the uncertainty is amplified rather than damped.
+    """
+    F = annual_fixed("tiingo_power", "laptop")
+    sr_hat = 0.5
+    rows = []
+    for yrs in (3, 5, 10, 20):
+        se = sr_standard_error(sr_hat, yrs)
+        lo, hi = sr_hat - 1.96 * se, sr_hat + 1.96 * se
+        rows.append((yrs, se, lo, hi,
+                     mvc(F, hi, tax=TAX_RATE),
+                     mvc(F, lo, tax=TAX_RATE)))
+
+    # With a CI that spans zero, the upper MVC bound is infinite.
+    ten = [r for r in rows if r[0] == 10][0]
+    ci_spans_zero = ten[2] <= 0
+    reg.truth(
+        "MVC-11", SEC,
+        r"MVC is a heavy-tailed random variable, not a point estimate: the "
+        r"Sharpe confidence interval reaches zero, so the capital floor is "
+        r"unbounded above",
+        "propagate the Lo (2002) Sharpe standard error through MVC = "
+        "F/((1-t)(SR*sigma - e - tau*s)) at F=\\$360/yr, t=30%, SR-hat=0.5",
+        ci_spans_zero,
+        "95% Sharpe CI includes zero at a 10-year sample",
+        "; ".join(f"{y}y: SR in [{lo:+.2f},{hi:+.2f}], MVC in "
+                  f"[\\${a:,.0f}, {'INF' if not math.isfinite(b) else f'\\${b:,.0f}'}]"
+                  for y, se, lo, hi, a, b in rows),
+        r"\textbf{This corrects the first draft of the section.} MVC-04 "
+        r"presented a table of point values at assumed Sharpe ratios, which is "
+        r"exactly the error S-14 identifies for PBO: reporting a statistic "
+        r"whose sampling error dominates it. Because MVC $\propto 1/SR$, the "
+        r"uncertainty in the Sharpe is amplified, not damped. With ten years of "
+        r"daily data at a true Sharpe of 0.5 the 95\% interval is roughly "
+        rf"$[{ten[2]:+.2f}, {ten[3]:+.2f}]$ -- it contains zero -- so the "
+        r"corresponding MVC interval has no finite upper bound. No amount of "
+        r"capital is provably sufficient. The point values in MVC-04 remain "
+        r"useful as a RANKING of cost stacks against each other, which is what "
+        r"they are actually for; they must not be read as a capital "
+        r"requirement. The operational reading is the lower bound: even on the "
+        r"most optimistic end of the Sharpe interval the floor is "
+        rf"\${ten[4]:,.0f}, which already exceeds the \$3,000 starting capital.",
+        table=[{"years": y, "se": se, "sr_lo": lo, "sr_hi": hi,
+                "mvc_lo": a, "mvc_hi": b if math.isfinite(b) else None}
+               for y, se, lo, hi, a, b in rows],
     )

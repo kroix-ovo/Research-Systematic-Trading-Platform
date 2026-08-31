@@ -1,10 +1,9 @@
 {
   "master_seed": 20260811,
   "summary": {
-    "PASS": 81,
-    "INFO": 11,
-    "FLAG": 9,
-    "FAIL": 3
+    "PASS": 90,
+    "INFO": 15,
+    "FLAG": 10
   },
   "checks": [
     {
@@ -654,10 +653,10 @@
       "section": "2.4 Portfolio construction",
       "claim": "Quadratic transaction costs do NOT create a no-trade region; proportional (L1) costs do",
       "method": "sweep the starting weight away from the frictionless optimum and measure the traded amount under each cost model",
-      "expected": "report claims quadratic costs give a no-trade region",
+      "expected": "quadratic trades at every nonzero drift; L1 has a nonzero no-trade band",
       "observed": "quadratic: trade > 0 at every nonzero drift (min traded 3.98e-03); L1: exactly zero trade until drift reaches 0.04",
-      "status": "FAIL",
-      "note": "\\textbf{Correction required.} Section 2.4 states that quadratic costs 'give a closed form AND a no-trade region'. The closed form is correct (P-12); the no-trade region is not. A smooth quadratic penalty has zero derivative at zero trade, so the first-order condition always prescribes a strictly positive trade -- the solution shrinks toward $w_0$ (partial adjustment) but never stops. A no-trade region requires a cost function with a KINK at zero, i.e. proportional/L1 costs, whose subgradient interval $[-c,c]$ absorbs small deviations. This is not pedantry: it changes the implementation. If the system is built on the quadratic model expecting bands to appear, it will rebalance every single day and bleed the cost the band was meant to save. Real spreads and commissions ARE proportional, so the L1 model is also the more faithful one. Recommended fix: either state the objective with an L1 term, or keep the quadratic form and impose the no-trade band as an explicit separate rule.",
+      "status": "PASS",
+      "note": "The corrected report now distinguishes the two models. At zero trade the quadratic penalty has zero marginal cost, so any nonzero marginal benefit produces a nonzero adjustment. The L1 penalty instead has a subgradient interval $[-c,c]$ at zero that absorbs small deviations and creates a genuine no-trade band.",
       "payload": {
         "quad_min_trade": 0.003975903614457849,
         "l1_band_width": 0.04,
@@ -985,8 +984,8 @@
       "section": "2.8 Statistical validation",
       "claim": "PSR denominator $\\sqrt{1-\\hat\\gamma_3\\widehat{SR}+\\frac{\\hat\\gamma_4-1}{4}\\widehat{SR}^2}$ (over $\\sqrt{n-1}$) is the true standard error of $\\widehat{SR}$ -- skew-normal(a=6)",
       "method": "200,000 independent samples of n=1250; empirical sd of the Sharpe estimate vs the formula (skew 0.89, kurtosis 3.75)",
-      "expected": "0.0275927",
-      "observed": "0.027564",
+      "expected": "0.0275527",
+      "observed": "0.0275653",
       "status": "PASS",
       "note": "Confirms the formula as written in the report, PROVIDED gamma_4 is non-excess kurtosis.",
       "payload": {}
@@ -1096,14 +1095,14 @@
           {
             "N": 5000,
             "formula": 3.6877030871775673,
-            "mc": 3.6810802189133764,
+            "mc": 3.681080218913376,
             "rel_err": 0.0017991643404462465
           },
           {
             "N": 10000,
             "formula": 3.86066485551044,
-            "mc": 3.85816152679802,
-            "rel_err": 0.0006488397893744668
+            "mc": 3.8581615267980207,
+            "rel_err": 0.0006488397893742448
           }
         ]
       }
@@ -1118,7 +1117,7 @@
       "status": "PASS",
       "note": "Formula gives 3.2551; independent Monte Carlo gives 3.2414. The quoted figure is correct as stated. Its practical meaning is worth spelling out in the report: an operator who tries 1,000 parameter combinations and reports the best one has an expected Sharpe of 3.26 from PURE NOISE, so a raw Sharpe of 3 is evidence of a large search, not of skill.",
       "payload": {
-        "mc": 3.2414077824583596
+        "mc": 3.2414077824583605
       }
     },
     {
@@ -1282,11 +1281,11 @@
       "status": "PASS",
       "note": "This reproduces the report's section 2.12 claim end to end on data with provably zero signal. Three points the report should absorb. First, the naive pipeline reports AUC 0.526 against a truth of 0.5, with a small standard error -- it looks significant. Second, the leak requires no look-ahead in the feature: the feature and label windows are disjoint by construction, and the leak comes entirely from neighbouring TRAINING rows sharing the test row's label window. An audit for 'no future data in features' is therefore necessary but not sufficient, which is the single most important practical consequence. Third, simply using contiguous folds instead of shuffled ones already removes most of the damage (0.499), because only the fold boundaries leak; purging and embargo clean up the remainder. Blocking is the cheap 90\\% fix, purging is the rest.",
       "payload": {
-        "shuffled_auc": 0.5261007025208437,
-        "blocked_auc": 0.4985130951633009,
-        "purged_auc": 0.5008762152178109,
-        "shuffled_se": 0.004375905063111596,
-        "purged_se": 0.005992383160293244
+        "shuffled_auc": 0.52610070201811,
+        "blocked_auc": 0.4985130954388307,
+        "purged_auc": 0.5008763285605139,
+        "shuffled_se": 0.004375876759020531,
+        "purged_se": 0.0059923868657615785
       }
     },
     {
@@ -1762,49 +1761,49 @@
     {
       "cid": "M-04",
       "section": "6.5 Pairs / statistical arbitrage",
-      "claim": "The report's half-life $=-\\ln 2/\\lambda$ systematically OVERSTATES the half-life, and the error grows with the speed of mean reversion",
-      "method": "same simulation; relative error of the report's formula against the known truth",
-      "expected": "half-life estimate should equal ln(2)/theta",
-      "observed": "theta=0.02 (true HL 34.7): report 34.7 (-0%); theta=0.05 (true HL 13.9): report 14.2 (+2%); theta=0.10 (true HL 6.9): report 7.3 (+6%); theta=0.25 (true HL 2.8): report 3.1 (+14%); theta=0.50 (true HL 1.4): report 1.8 (+27%); theta=1.00 (true HL 0.7): report 1.1 (+58%)",
-      "status": "FAIL",
-      "note": "\\textbf{Correction required.} Section 6.5 states 'Estimate via OLS of $\\Delta X_t=\\lambda X_{t-1}+c+\\varepsilon_t$; then $\\theta=-\\lambda$ and half-life $=-\\ln 2/\\lambda$'. The exact discretisation of the OU process gives $\\lambda=e^{-\\theta\\Delta t}-1$, so the correct inversion is $\\theta=-\\ln(1+\\lambda)/\\Delta t$ and half-life $=-\\Delta t\\ln 2/\\ln(1+\\lambda)$. The report's form is the first-order Taylor expansion, accurate only when $\\theta\\Delta t\\ll1$. For slow reversion (theta $\\le$ 0.05) the error is under 2.3% and harmless. For the fast reversion that actually makes a pairs trade worth doing (theta $\\ge$ 0.25) it reaches 58%. The error is one-directional: the estimate is always too LONG. Operationally that means holding period limits, time-based stops and capital-allocation horizons are all set too generously, on the strategies where the mis-estimate is worst. The fix is one line of code and removes the bias entirely.",
+      "claim": "The Euler half-life $-\\ln 2/\\lambda$ overstates the exact OU half-life, with error increasing in mean-reversion speed",
+      "method": "evaluate the population slope lambda=exp(-theta*dt)-1 at six speeds and compare the Euler approximation with ln(2)/theta",
+      "expected": "positive, monotonically increasing approximation error",
+      "observed": "theta=0.02 (true HL 34.7): Euler 35.0 (+1%); theta=0.05 (true HL 13.9): Euler 14.2 (+3%); theta=0.10 (true HL 6.9): Euler 7.3 (+5%); theta=0.25 (true HL 2.8): Euler 3.1 (+13%); theta=0.50 (true HL 1.4): Euler 1.8 (+27%); theta=1.00 (true HL 0.7): Euler 1.1 (+58%)",
+      "status": "PASS",
+      "note": "The corrected report uses $-\\Delta t\\ln 2/\\ln(1+\\lambda)$. This check retains the discarded Euler form only as a regression guard that quantifies why it must not be restored.",
       "payload": {
         "table": [
           {
             "theta": 0.02,
             "true_hl": 34.657359027997266,
-            "report_hl": 34.655764897815274,
-            "report_err": -4.599687416184661e-05
+            "euler_hl": 35.0050878558766,
+            "euler_err": 0.010033333111113096
           },
           {
             "theta": 0.05,
             "true_hl": 13.862943611198904,
-            "report_hl": 14.187746661603871,
-            "report_err": 0.023429587504242733
+            "euler_hl": 14.212405194400322,
+            "euler_err": 0.02520832465329459
           },
           {
             "theta": 0.1,
             "true_hl": 6.931471805599452,
-            "report_hl": 7.339229451040503,
-            "report_err": 0.05882699329623642
+            "euler_hl": 7.283820659908832,
+            "euler_err": 0.05083319447750512
           },
           {
             "theta": 0.25,
             "true_hl": 2.772588722239781,
-            "report_hl": 3.1478635168144957,
-            "report_err": 0.13535177127589137
+            "euler_hl": 3.1335878588742867,
+            "euler_err": 0.13020291604694956
           },
           {
             "theta": 0.5,
             "true_hl": 1.3862943611198906,
-            "report_hl": 1.7627820555829499,
-            "report_err": 0.27157846487878756
+            "euler_hl": 1.7616294577201665,
+            "euler_err": 0.270747041268399
           },
           {
             "theta": 1.0,
             "true_hl": 0.6931471805599453,
-            "report_hl": 1.0982458334249399,
-            "report_err": 0.5844338175591273
+            "euler_hl": 1.0965426940779806,
+            "euler_err": 0.5819767068693262
           }
         ]
       }
@@ -2116,12 +2115,12 @@
     {
       "cid": "A-01",
       "section": "1. Alternative and cheaper models",
-      "claim": "Section 6.7's claim of a ``$\\sim$90--98\\%-cheaper cache rate on DeepSeek/GLM/Kimi''",
+      "claim": "Cache-hit input is $\\sim$98--99\\% cheaper for DeepSeek and $\\sim$75--90\\% cheaper for GLM/Kimi at the listed prices",
       "method": "compute 1 - (cache-hit price / cache-miss price) from the report's own section 1.2 pricing table",
-      "expected": "90-98% discount across DeepSeek, GLM and Kimi",
+      "expected": "rounded ranges 98-99% for DeepSeek and 75-90% for GLM/Kimi",
       "observed": "DeepSeek V4 Flash 98%; DeepSeek V4 Pro 99%; Kimi K2.6 / K2.7 Code 80%; Kimi K2.5 75%; Kimi K3 90%; GLM-4.6 82%; GLM-4.5-Air 85%",
-      "status": "FAIL",
-      "note": "\\textbf{Internal inconsistency.} The 90--98\\% range holds only for DeepSeek (98% and 99%). For the GLM and Kimi families the same table gives discounts of 75%--90% -- real and worth having, but not the order of magnitude claimed. The two statements are computed from the same table and contradict each other. This matters because section 6.7 presents prompt caching as the primary cost-control lever: if the actual saving on a GLM coding plan is 82\\% rather than 98\\%, the residual spend is nine times larger than the sentence implies. Recommended fix: state ``up to $\\sim$98\\% on DeepSeek, $\\sim$75%--90% on GLM/Kimi''.",
+      "status": "PASS",
+      "note": "The provider-specific wording removes the former internal inconsistency. DeepSeek Pro computes to 99.17\\%, so the upper bound must round to 99\\%, not 98\\%.",
       "payload": {
         "table": [
           {
@@ -2301,6 +2300,440 @@
       "status": "PASS",
       "note": "The report states the rule correctly, including the 6\\% clause that is frequently omitted in secondary sources. The worked counterexample shows why the clause matters: day-trade COUNT alone does not determine the classification. This check verifies the report's internal logic only. The report itself flags that this framework was reportedly eliminated effective June 2026 and replaced by an intraday-margin standard; that status, and everything else in section 3.6, must be confirmed directly with FINRA and the broker before any reliance. Nothing here is legal or tax advice.",
       "payload": {}
+    },
+    {
+      "cid": "MVC-01",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Provider pricing as read from vendor pages, August 2026",
+      "method": "browser read of massive.com/pricing, tiingo.com/pricing, alpaca.markets/data",
+      "expected": "-",
+      "observed": "cheapest 20+yr history: tiingo_starter at \\$0/mo; cheapest quote-level data: alpaca_plus at \\$99/mo",
+      "status": "INFO",
+      "note": "The single most consequential pricing fact for a small account: \\textbf{Tiingo's free tier carries 30+ years of end-of-day history}, and its \\$30/mo Power tier lifts the rate limits without changing the history. Massive's 20+ year archive costs \\$199/mo because it is bundled with real-time and quote data. A daily-frequency strategy needs neither. Quote data is required only to calibrate the spread term of the cost model, which is a one-off measurement rather than a subscription. Buying the wrong tier is the most expensive mistake available at this account size, and it is made before any research begins.",
+      "payload": {
+        "pricing": {
+          "massive_basic": {
+            "usd_mo": 0,
+            "history_yr": 2,
+            "quotes": false,
+            "note": "5 API calls/min, EOD only"
+          },
+          "massive_starter": {
+            "usd_mo": 29,
+            "history_yr": 5,
+            "quotes": false,
+            "note": "unlimited calls, 15-min delayed"
+          },
+          "massive_developer": {
+            "usd_mo": 79,
+            "history_yr": 10,
+            "quotes": false,
+            "note": "adds trades"
+          },
+          "massive_advanced": {
+            "usd_mo": 199,
+            "history_yr": 20,
+            "quotes": true,
+            "note": "real-time, quotes, financials; non-pro only"
+          },
+          "massive_imbalance": {
+            "usd_mo": 49,
+            "history_yr": 0,
+            "quotes": false,
+            "note": "NYSE auction order imbalances"
+          },
+          "tiingo_starter": {
+            "usd_mo": 0,
+            "history_yr": 30,
+            "quotes": false,
+            "note": "500 symbols/mo, 1k req/day, internal use only"
+          },
+          "tiingo_power": {
+            "usd_mo": 30,
+            "history_yr": 30,
+            "quotes": false,
+            "note": "100k req/day, 40GB/mo, internal use only"
+          },
+          "alpaca_free": {
+            "usd_mo": 0,
+            "history_yr": 7,
+            "quotes": false,
+            "note": "IEX only, 200 calls/min, 15-min delayed API"
+          },
+          "alpaca_plus": {
+            "usd_mo": 99,
+            "history_yr": 7,
+            "quotes": true,
+            "note": "full SIP, unlimited calls"
+          },
+          "vps_hetzner": {
+            "usd_mo": 6,
+            "history_yr": 0,
+            "quotes": false,
+            "note": "CX22-class always-on VPS"
+          },
+          "laptop": {
+            "usd_mo": 0,
+            "history_yr": 0,
+            "quotes": false,
+            "note": "cron on existing hardware"
+          }
+        }
+      }
+    },
+    {
+      "cid": "MVC-02",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Break-even MVC $=F/(SR\\sigma-e-\\tau s_{1/2})$",
+      "method": "closed form vs bisection on the profit function, F=\\$360/yr, SR=0.5",
+      "expected": "5790.39",
+      "observed": "5790.39",
+      "status": "PASS",
+      "note": "Confirms the algebra. The formula's shape is the finding: MVC is hyperbolic in Sharpe and linear in fixed cost, so a halved Sharpe expectation doubles the capital floor, and every dollar of monthly subscription raises it by 12/(net rate) dollars.",
+      "payload": {}
+    },
+    {
+      "cid": "MVC-03",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Each \\$1/month of fixed cost raises the capital floor by 12/(net rate)",
+      "method": "differentiate MVC with respect to monthly fixed cost at SR=0.5",
+      "expected": "-",
+      "observed": "\\$193 of required capital per \\$1/mo",
+      "status": "INFO",
+      "note": "At a Sharpe of 0.5 and a 12.5% volatility target, every \\$1/month of recurring cost adds \\$193 to the capital needed to break even. A \\$99/mo market-data plan therefore carries a \\$19,108 capital prerequisite. This is the number to put in front of any subscription decision.",
+      "payload": {
+        "per_dollar_month": 193.01293186643505
+      }
+    },
+    {
+      "cid": "MVC-04",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Minimum viable capital across cost stacks and Sharpe expectations",
+      "method": "MVC = F / (SR*sigma - e - tau*s_half), sigma=0.125, e=2bp, tau=2.0/yr, half-spread=0.64bp",
+      "expected": "MVC rises hyperbolically as Sharpe falls",
+      "observed": "Tiingo Power + laptop (\\$360/yr): 3,612/5,790/9,685/14,591; Tiingo Power + VPS (\\$432/yr): 4,334/6,948/11,622/17,510; Massive Advanced + VPS (\\$2,460/yr): 24,681/39,568/66,179/99,708  [at SR 0.8/0.5/0.3/0.2]",
+      "status": "PASS",
+      "note": "The table is the answer to ``how much capital do I need''. At the realistic Sharpe range the report's section 4.8 gives for a solo operator (0.3--0.8), a lean stack (\\$360/yr) implies a floor of roughly \\$3,612--\\$9,685. The same strategy on a full real-time stack (\\$3,648/yr) needs \\$36,600--\\$98,138. Nothing about the strategy changed between those two rows -- only the subscription decision. For a daily-frequency system the lean stack is not a compromise: end-of-day bars are the entire data requirement, and Tiingo's free tier already carries more history than the post-decimalisation sample can use.",
+      "payload": {
+        "table": [
+          {
+            "stack": "free everything (Tiingo Starter + laptop)",
+            "fixed_usd_yr": 0.0,
+            "mvc": {
+              "0.8": 0.0,
+              "0.5": 0.0,
+              "0.3": 0.0,
+              "0.2": 0.0
+            }
+          },
+          {
+            "stack": "Tiingo Power + laptop",
+            "fixed_usd_yr": 360.0,
+            "mvc": {
+              "0.8": 3611.846857693234,
+              "0.5": 5790.387955993052,
+              "0.3": 9684.708920692996,
+              "0.2": 14591.439688715951
+            }
+          },
+          {
+            "stack": "Tiingo Power + VPS",
+            "fixed_usd_yr": 432.0,
+            "mvc": {
+              "0.8": 4334.216229231881,
+              "0.5": 6948.465547191662,
+              "0.3": 11621.650704831594,
+              "0.2": 17509.727626459142
+            }
+          },
+          {
+            "stack": "Massive Advanced + VPS",
+            "fixed_usd_yr": 2460.0,
+            "mvc": {
+              "0.8": 24680.953527570433,
+              "0.5": 39567.651032619186,
+              "0.3": 66178.84429140214,
+              "0.2": 99708.17120622567
+            }
+          },
+          {
+            "stack": "Massive Advanced + Alpaca Plus + VPS",
+            "fixed_usd_yr": 3648.0,
+            "mvc": {
+              "0.8": 36600.0481579581,
+              "0.5": 58675.931287396255,
+              "0.3": 98138.38372968903,
+              "0.2": 147859.92217898832
+            }
+          }
+        ],
+        "sharpes": [
+          0.8,
+          0.5,
+          0.3,
+          0.2
+        ]
+      }
+    },
+    {
+      "cid": "MVC-05",
+      "section": "MVC. Minimum viable capital",
+      "claim": "At \\$3,000 the strategy is viable ONLY on a zero-subscription stack",
+      "method": "expected annual P\\&L at C=\\$3,000, SR=0.5, sigma=12.5%: gross \\$187.50, proportional costs \\$0.98, minus fixed costs",
+      "expected": "only the free stack clears zero",
+      "observed": "free (Tiingo Starter + laptop): +187/yr; Tiingo Power + laptop: -173/yr; Tiingo Power + VPS: -245/yr; Massive Advanced + VPS: -2273/yr",
+      "status": "PASS",
+      "note": "At \\$3,000 with a Sharpe of 0.5, the expected gross excess return is \\$188/yr. A \\$30/mo data plan costs \\$360/yr. The subscription alone is roughly double the entire expected return, so the account loses money in expectation \\emph{even if the edge is completely real}. This is the central practical finding of the section: at small capital the binding constraint is not the market, the broker, or the strategy -- it is the vendor invoice. The only configuration that survives at \\$3,000 is free data on existing hardware, which for a single-ETF daily strategy is genuinely sufficient. Commission is not the issue once the broker is zero-commission; the recurring fixed cost is.",
+      "payload": {
+        "gross": 187.5,
+        "proportional": 0.984,
+        "table": [
+          {
+            "stack": "free (Tiingo Starter + laptop)",
+            "fixed": 0.0,
+            "net": 186.516
+          },
+          {
+            "stack": "Tiingo Power + laptop",
+            "fixed": 360.0,
+            "net": -173.484
+          },
+          {
+            "stack": "Tiingo Power + VPS",
+            "fixed": 432.0,
+            "net": -245.484
+          },
+          {
+            "stack": "Massive Advanced + VPS",
+            "fixed": 2460.0,
+            "net": -2273.484
+          }
+        ]
+      }
+    },
+    {
+      "cid": "MVC-06",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Share quantisation imposes a capital floor independent of costs",
+      "method": "whole-share granularity on SPLG at $78; RMS quantisation error converted to volatility tracking error against a 12.5% target",
+      "expected": "error below 10% of target vol (1.25%)",
+      "observed": "\\$1,000: 12 sh, vol err 0.34%; \\$3,000: 38 sh, vol err 0.11%; \\$5,000: 64 sh, vol err 0.07%; \\$10,000: 128 sh, vol err 0.03%",
+      "status": "PASS",
+      "note": "A second floor, independent of the cost floor and often overlooked. Volatility targeting requires continuously adjustable exposure; whole shares quantise it. The instrument choice does most of the work here: SPLG at \\$78 clears the threshold at \\$3,000, whereas an S\\&P 500 ETF priced near \\$600 would leave only five shares and a 0.87\\% volatility tracking error -- a 7\\% relative miss on the exact quantity the strategy exists to control. Fractional-share support removes this floor entirely where the broker offers it reliably, which is a concrete reason to verify fractional order handling before committing to an instrument.",
+      "payload": {
+        "table": [
+          {
+            "capital": 1000,
+            "shares": 12,
+            "step": 0.078,
+            "rms": 0.022516660498395406,
+            "vol_err": 0.0033774990747593107
+          },
+          {
+            "capital": 3000,
+            "shares": 38,
+            "step": 0.026,
+            "rms": 0.007505553499465135,
+            "vol_err": 0.0011258330249197702
+          },
+          {
+            "capital": 5000,
+            "shares": 64,
+            "step": 0.0156,
+            "rms": 0.004503332099679081,
+            "vol_err": 0.000675499814951862
+          },
+          {
+            "capital": 10000,
+            "shares": 128,
+            "step": 0.0078,
+            "rms": 0.0022516660498395403,
+            "vol_err": 0.000337749907475931
+          },
+          {
+            "capital": 25000,
+            "shares": 320,
+            "step": 0.00312,
+            "rms": 0.0009006664199358162,
+            "vol_err": 0.00013509996299037244
+          },
+          {
+            "capital": 50000,
+            "shares": 641,
+            "step": 0.00156,
+            "rms": 0.0004503332099679081,
+            "vol_err": 6.754998149518622e-05
+          }
+        ]
+      }
+    },
+    {
+      "cid": "MVC-07",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Capital and recurring cost by build phase",
+      "method": "phase-by-phase requirement derived from the milestone structure",
+      "expected": "-",
+      "observed": "M0 governance: \\$0/yr; M1 slice research: \\$559/yr; M2 hardening: \\$360/yr; M3 sleeves 2-3: \\$360/yr; M4 allocation: \\$360/yr; M5 paper portfolio: \\$432/yr; M6 live minimum: \\$432/yr",
+      "status": "INFO",
+      "note": "Milestones M0 through M5 require \\emph{no trading capital at all} -- only the recurring data and infrastructure cost. That is the scheduling insight hiding in the MVC arithmetic: the capital constraint does not bind until M6, roughly six to nine months into the build, so capital accumulation and platform construction can run in parallel. The one irregular line is M1, which needs a single month of quote-level data (about \\$199, or \\$99 on the broker's own feed) to calibrate the spread term of the cost model. Buy it, calibrate, cancel: it is a measurement, not a subscription. Treating it as recurring would raise the M6 capital floor by roughly \\$38,410.",
+      "payload": {
+        "table": [
+          {
+            "phase": "M0 governance",
+            "capital": 0.0,
+            "fixed_usd_yr": 0.0,
+            "note": "no data, no capital: registry, contracts, CI"
+          },
+          {
+            "phase": "M1 slice research",
+            "capital": 0.0,
+            "fixed_usd_yr": 559.0,
+            "note": "EOD history all year, plus ONE month of quote data to calibrate the spread term"
+          },
+          {
+            "phase": "M2 hardening",
+            "capital": 0.0,
+            "fixed_usd_yr": 360.0,
+            "note": "no new data requirement"
+          },
+          {
+            "phase": "M3 sleeves 2-3",
+            "capital": 0.0,
+            "fixed_usd_yr": 360.0,
+            "note": "same universe scope"
+          },
+          {
+            "phase": "M4 allocation",
+            "capital": 0.0,
+            "fixed_usd_yr": 360.0,
+            "note": "no new data requirement"
+          },
+          {
+            "phase": "M5 paper portfolio",
+            "capital": 0.0,
+            "fixed_usd_yr": 432.0,
+            "note": "always-on host required for daily reconciliation"
+          },
+          {
+            "phase": "M6 live minimum",
+            "capital": 3000.0,
+            "fixed_usd_yr": 432.0,
+            "note": "capital sized to measure execution, not to earn"
+          },
+          {
+            "phase": "M7 scale",
+            "capital": NaN,
+            "fixed_usd_yr": 432.0,
+            "note": "capital above MVC for the achieved Sharpe"
+          }
+        ]
+      }
+    },
+    {
+      "cid": "MVC-09",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Taxes scale the capital floor by exactly $1/(1-t)$",
+      "method": "compare MVC computed with a tax-adjusted net rate against MVC/(1-t) across five blended rates",
+      "expected": "0",
+      "observed": "1.1102e-16",
+      "status": "PASS",
+      "note": "Exact, because tax is proportional to trading profit while the subscription is not deductible: after-tax profit is $(1-t)\\,C\\,r - F$, so the root scales by $1/(1-t)$.",
+      "payload": {}
+    },
+    {
+      "cid": "MVC-10",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Tax drag was absent from the first draft of this section and raises the capital floor materially",
+      "method": "MVC at F=\\$360/yr, SR=0.5, across blended short-term rates",
+      "expected": "untaxed \\$5,790",
+      "observed": "15%: \\$6,812 (+18%); 24%: \\$7,619 (+32%); 30%: \\$8,272 (+43%); 37%: \\$9,191 (+59%)",
+      "status": "FLAG",
+      "note": "At the ~200\\% annual turnover of a vol-managed sleeve essentially all gains are SHORT-TERM, taxed as ordinary income. Worse, for an individual without trader status the data subscription is not deductible at all -- the Tax Cuts and Jobs Act suspended miscellaneous itemized deductions -- so the fixed cost is paid with after-tax dollars while the profit is taxed. At a 30\\% blended rate the floor rises from \\$5,790 to \\$8,272, a 43\\% increase, and the effect compounds with the hyperbolic sensitivity to Sharpe in MVC-04. \\textbf{The practical consequence is a recommendation the report did not previously make: hold this strategy in a Roth IRA.} A high-turnover, long-only, unlevered strategy is close to the ideal case for a tax-sheltered wrapper, where $t=0$ and the entire drag disappears. The constraints -- annual contribution limits and restricted withdrawals -- are nearly irrelevant at this account size and for capital that is not needed back. Nothing here is tax advice; confirm treatment with a qualified professional.",
+      "payload": {
+        "table": [
+          {
+            "tax": 0.0,
+            "mvc": 5790.387955993052
+          },
+          {
+            "tax": 0.15,
+            "mvc": 6812.221124697709
+          },
+          {
+            "tax": 0.24,
+            "mvc": 7618.93152104349
+          },
+          {
+            "tax": 0.3,
+            "mvc": 8271.98279427579
+          },
+          {
+            "tax": 0.37,
+            "mvc": 9191.091993639764
+          }
+        ]
+      }
+    },
+    {
+      "cid": "MVC-11",
+      "section": "MVC. Minimum viable capital",
+      "claim": "MVC is a heavy-tailed random variable, not a point estimate: the Sharpe confidence interval reaches zero, so the capital floor is unbounded above",
+      "method": "propagate the Lo (2002) Sharpe standard error through MVC = F/((1-t)(SR*sigma - e - tau*s)) at F=\\$360/yr, t=30%, SR-hat=0.5",
+      "expected": "95% Sharpe CI includes zero at a 10-year sample",
+      "observed": "3y: SR in [-0.63,+1.63], MVC in [\\$2,525, INF]; 5y: SR in [-0.38,+1.38], MVC in [\\$2,994, INF]; 10y: SR in [-0.12,+1.12], MVC in [\\$3,682, INF]; 20y: SR in [+0.06,+0.94], MVC in [\\$4,397, \\$69,736]",
+      "status": "PASS",
+      "note": "\\textbf{This corrects the first draft of the section.} MVC-04 presented a table of point values at assumed Sharpe ratios, which is exactly the error S-14 identifies for PBO: reporting a statistic whose sampling error dominates it. Because MVC $\\propto 1/SR$, the uncertainty in the Sharpe is amplified, not damped. With ten years of daily data at a true Sharpe of 0.5 the 95\\% interval is roughly $[-0.12, +1.12]$ -- it contains zero -- so the corresponding MVC interval has no finite upper bound. No amount of capital is provably sufficient. The point values in MVC-04 remain useful as a RANKING of cost stacks against each other, which is what they are actually for; they must not be read as a capital requirement. The operational reading is the lower bound: even on the most optimistic end of the Sharpe interval the floor is \\$3,682, which already exceeds the \\$3,000 starting capital.",
+      "payload": {
+        "table": [
+          {
+            "years": 3,
+            "se": 0.5774934434681293,
+            "sr_lo": -0.6318871491975333,
+            "sr_hi": 1.6318871491975333,
+            "mvc_lo": 2525.2432158133192,
+            "mvc_hi": null
+          },
+          {
+            "years": 5,
+            "se": 0.44732449781920774,
+            "sr_lo": -0.3767560157256472,
+            "sr_hi": 1.3767560157256473,
+            "mvc_lo": 2994.097850280459,
+            "mvc_hi": null
+          },
+          {
+            "years": 10,
+            "se": 0.31630618579882874,
+            "sr_lo": -0.11996012416570434,
+            "sr_hi": 1.1199601241657042,
+            "mvc_lo": 3682.2274204709715,
+            "mvc_hi": null
+          },
+          {
+            "years": 20,
+            "se": 0.22366224890960387,
+            "sr_lo": 0.061621992137176396,
+            "sr_hi": 0.9383780078628237,
+            "mvc_lo": 4396.759917365854,
+            "mvc_hi": 69736.02940112905
+          }
+        ]
+      }
+    },
+    {
+      "cid": "MVC-08",
+      "section": "MVC. Minimum viable capital",
+      "claim": "Clearing the MVC bar does not make the result measurable",
+      "method": "expected vs realised dispersion of annual P\\&L at C=\\$3,000, SR=0.5",
+      "expected": "-",
+      "observed": "expected \\$188/yr against a standard deviation of \\$375/yr; 16 years for a t-statistic of 2",
+      "status": "INFO",
+      "note": "At \\$3,000 the expected annual profit is \\$188 against a \\$375 standard deviation -- the noise is 2 times the signal. Scaling capital scales both identically, so \\emph{no amount of capital makes live P\\&L informative faster}. This is the same result as S-11 from a different direction, and it is the reason the charter's milestone M6 is defined as validating the cost model and the plumbing rather than the edge. MVC answers ``will this lose money by construction''. It does not answer ``does the edge exist'', and the two questions should never be conflated in a promotion decision.",
+      "payload": {
+        "exp_pnl_usd": 187.5,
+        "sd_usd": 375.0,
+        "years_for_t2": 16.0
+      }
     }
   ]
 }

@@ -419,15 +419,7 @@ def _black_litterman(reg: Registry) -> None:
 
 
 def _transaction_costs(reg: Registry) -> None:
-    """The report's no-trade-region claim. Quadratic costs do NOT produce one.
-
-    Report text (2.4): 'quadratic costs give a closed form and a no-trade region
-    (don't rebalance until drift exceeds a band)'.
-
-    The closed form is right. The no-trade region is wrong: it requires
-    PROPORTIONAL (L1) costs. Under a smooth quadratic penalty the solution is
-    continuous in the starting weights and always trades a nonzero amount.
-    """
+    """Quadratic costs imply partial adjustment; L1 costs create a no-trade band."""
     g = rng(307)
     n = 5
     S = _psd(g, n) / n + np.eye(n) * 0.02
@@ -478,32 +470,22 @@ def _transaction_costs(reg: Registry) -> None:
     l1_band = drifts[np.argmax(l1_trade > 1e-3)] if np.any(l1_trade > 1e-3) else np.nan
     l1_has_band = bool(l1_band > 0)
 
-    reg.add(
+    reg.truth(
         "P-13", SEC,
         r"Quadratic transaction costs do NOT create a no-trade region; "
         r"proportional (L1) costs do",
         "sweep the starting weight away from the frictionless optimum and "
         "measure the traded amount under each cost model",
-        "report claims quadratic costs give a no-trade region",
+        quad_always_trades and l1_has_band,
+        "quadratic trades at every nonzero drift; L1 has a nonzero no-trade band",
         f"quadratic: trade > 0 at every nonzero drift "
         f"(min traded {quad_trade[1]:.2e}); "
         f"L1: exactly zero trade until drift reaches {l1_band:.2f}",
-        "FAIL" if (quad_always_trades and l1_has_band) else "INFO",
-        r"\textbf{Correction required.} Section 2.4 states that quadratic costs "
-        r"'give a closed form AND a no-trade region'. The closed form is correct "
-        r"(P-12); the no-trade region is not. A smooth quadratic penalty has zero "
-        r"derivative at zero trade, so the first-order condition always prescribes "
-        r"a strictly positive trade -- the solution shrinks toward $w_0$ "
-        r"(partial adjustment) but never stops. A no-trade region requires a cost "
-        r"function with a KINK at zero, i.e. proportional/L1 costs, whose "
-        r"subgradient interval $[-c,c]$ absorbs small deviations. This is not "
-        r"pedantry: it changes the implementation. If the system is built on the "
-        r"quadratic model expecting bands to appear, it will rebalance every "
-        r"single day and bleed the cost the band was meant to save. Real spreads "
-        r"and commissions ARE proportional, so the L1 model is also the more "
-        r"faithful one. Recommended fix: either state the objective with an L1 "
-        r"term, or keep the quadratic form and impose the no-trade band as an "
-        r"explicit separate rule.",
+        r"The corrected report now distinguishes the two models. At zero trade "
+        r"the quadratic penalty has zero marginal cost, so any nonzero marginal "
+        r"benefit produces a nonzero adjustment. The L1 penalty instead has a "
+        r"subgradient interval $[-c,c]$ at zero that absorbs small deviations and "
+        r"creates a genuine no-trade band.",
         quad_min_trade=float(quad_trade[1]), l1_band_width=float(l1_band),
         drifts=drifts.tolist(), quad_trade=quad_trade.tolist(),
         l1_trade=l1_trade.tolist(),

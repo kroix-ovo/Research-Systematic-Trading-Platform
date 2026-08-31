@@ -212,14 +212,27 @@ def _fractional_kelly(reg: Registry) -> None:
     fk = mu_v / sig_v**2
     n_paths, steps = 20_000, 252 * 10
     dt = 1 / 252
-    z = g.standard_normal((n_paths, steps))
+    # Only every 20th path is actually measured below, so draw the full
+    # stimulus in row chunks and retain just those. Chunked drawing is
+    # bit-identical to one (n_paths, steps) call because standard_normal fills
+    # C-order; the single call was a 400 MB allocation with three more copies
+    # layered on top of it.
+    _keep, _done = [], 0
+    while _done < n_paths:
+        _m = min(2_000, n_paths - _done)
+        _zc = g.standard_normal((_m, steps))
+        _keep.append(_zc[[i for i in range(_m) if (_done + i) % 20 == 0]].copy())
+        _done += _m
+        del _zc
+    z = np.vstack(_keep)
+    del _keep
     rows = []
     for cfrac in (1.0, 0.5, 0.25):
         fv = cfrac * fk
         inc = (fv * mu_v - 0.5 * fv**2 * sig_v**2) * dt + \
             fv * sig_v * math.sqrt(dt) * z
         eq = np.exp(np.cumsum(inc, axis=1))
-        dd = np.array([max_drawdown(eq[i]) for i in range(0, n_paths, 20)])
+        dd = np.array([max_drawdown(eq[i]) for i in range(eq.shape[0])])
         rows.append((cfrac, cfrac * (2 - cfrac),
                      float(np.median(dd)), float(np.percentile(dd, 5))))
     reg.add(

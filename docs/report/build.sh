@@ -6,17 +6,22 @@ set -euo pipefail
 export PATH="/opt/homebrew/bin:$PATH"
 cd "$(dirname "$0")"
 
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+if [[ -x "../../.venv/bin/python" && "${PYTHON_BIN}" == "python3" ]]; then
+  PYTHON_BIN="../../.venv/bin/python"
+fi
+
 if [[ "${1:-}" == "--all" ]]; then
   echo "==> verification suite"
-  python3 verify/run_all.py
+  "$PYTHON_BIN" verify/run_all.py
   echo "==> figures"
-  python3 figures/fig_math.py
-  python3 figures/fig_systems.py
-  python3 figures/fig_verify.py
+  "$PYTHON_BIN" figures/fig_math.py
+  "$PYTHON_BIN" figures/fig_systems.py
+  "$PYTHON_BIN" figures/fig_verify.py
 fi
 
 echo "==> LaTeX tables from verification results"
-python3 gen_tables.py
+"$PYTHON_BIN" gen_tables.py
 
 echo "==> pandoc -> PDF"
 pandoc report.md \
@@ -26,7 +31,6 @@ pandoc report.md \
   --include-in-header=preamble.tex \
   --resource-path=.:figures \
   --toc-depth=2 \
-  --number-sections \
   -V documentclass=article \
   -V papersize=a4 \
   -V fontsize=10pt \
