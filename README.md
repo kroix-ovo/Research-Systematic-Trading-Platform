@@ -1,14 +1,14 @@
 # Research: Systematic Trading Platform
 
 A deterministic quant research and paper-trading platform for testing one
-tradable hypothesis at a time — built with agentic coding assistants, and
+tradable hypothesis at a time, built with agentic coding assistants, and
 designed so that **it can falsify its own hypotheses**.
 
 ## The claim
 
 The platform is **not** evidence of an edge. Its job is to make one specific
 trading hypothesis testable, reproducible, and easy to reject. The competitive
-claim is not a signal — it is that every result is pre-registered, costed,
+claim is not a signal, it is that every result is pre-registered, costed,
 deflated against a cumulative trial count, and reproducible from a seed.
 
 ## What is here
